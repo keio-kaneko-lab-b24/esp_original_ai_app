@@ -6,6 +6,7 @@
 #include "motion.h"
 #include "predictor.h"
 #include "emg.h"
+#include "param_ml.h"
 
 TaskHandle_t TaskIO;
 TaskHandle_t TaskMain;

@@ -47,12 +47,10 @@ motion PredictThreshold(
     // paperにもrockにも判定された場合はNONEを返す。
     if ((paper == true) & (rock == false))
     {
-        printf("predict paper");
         return PAPER;
     }
     else if ((rock == true) & (paper == false))
     {
-        printf("predict rock");
         return ROCK;
     }
     else

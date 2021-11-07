@@ -1,9 +1,60 @@
 {
+    "ml" : {
+    },
     "monitor" : {
+        "do_task": {
+            "pre_task": {
+                "rest_keep_time": 3,
+                "repeat_num":1
+            },
+            "fing_stretch": {
+                "paper_keep_time": 1,
+                "rest_keep_time": 1,
+                "repeat_num":5
+            },
+            "fing_flexion": {
+                "rock_keep_time": 1,
+                "rest_keep_time": 1,
+                "repeat_num":5
+            },
+            "grip_stretch": {
+                "paper_keep_time": 3,
+                "rest_keep_time": 3,
+                "repeat_num":1
+            },
+            "grip_flexion": {
+                "rock_keep_time": 3,
+                "rest_keep_time": 3,
+                "repeat_num":1
+            },
+            "grip_release": {
+                "paper_keep_time": 3,
+                "rest_keep_time": 3,
+                "repeat_num":1
+            },
+            "grip": {
+                "paper_keep_time": 3,
+                "rock_keep_time": 3,
+                "rest_keep_time": 3,
+                "repeat_num":1
+            },
+            "elbow_flexion_stretch": {
+                "paper_keep_time": 1,
+                "rock_keep_time": 1,
+                "rest_keep_time": 1,
+                "repeat_num":5
+            },
+            "elbow_stretch_flexion": {
+                "paper_keep_time": 1,
+                "rock_keep_time": 1,
+                "rest_keep_time": 1,
+                "repeat_num":5
+            }
+        },
         "view_monitor": {
-            "raw_data_view_yaxis_max": 1500,
+            "raw_data_view_yaxis_max": 1.5,
             "raw_data_view_yaxis_min": 0,
-            "sp_data_view_yaxis_max": 1500,
+            "sp_data_view_yaxis_max": 1.5,
             "sp_data_view_yaxis_min": 0
         }
     }
