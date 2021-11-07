@@ -41,7 +41,7 @@ private:
     // HandRobotAppへ"RMS筋電情報"を送信
     void onRead(BLECharacteristic *pCharacteristic)
     {
-        sprintf(buf, "E%f,F%f", random(1, 500) / 100.0, random(1, 500) / 100.0);
+        sprintf(buf, "E%f,F%f", extensor_value, flexor_value);
         pCharacteristic->setValue(buf);
         // Serial.println(buf);
     }

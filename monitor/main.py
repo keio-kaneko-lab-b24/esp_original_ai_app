@@ -6,6 +6,7 @@ import common
 
 args = common.load_args()
 
+
 async def view_task(task_number, task_type, flipImage):
     '''課題のステート画面を起動する'''
     print("start view_task")

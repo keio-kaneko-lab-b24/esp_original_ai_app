@@ -1,9 +1,8 @@
 # =====================
-# 標準入力によるタスク
+# 標準入力によるカスタムタスク
 # =====================
 
 import re
-from define_task import define_task
 import common
 
 args = common.load_args()
@@ -36,7 +35,12 @@ def instruct(instruction):
 
 # 標準入力を受け付ける
 while True:
-    str = input("入力してください[r:rock, p:paper, n:rest, q:quit]\n")
+    try:
+        str = input("入力してください[r:rock, p:paper, n:rest, q:quit]\n")
+    except:
+        print("*** 入力を終了します ***")
+        break
+
     print(f"入力: {str}")
     if str == "r":
         result = instruct("rock")
@@ -47,6 +51,8 @@ while True:
     elif str == "q":
         print("*** 入力を終了します ***")
         break
+    else:
+        continue
 
     if not result:
         print("!! 入力がありません。筋電計が接続されていることを確認してください。 !!")
