@@ -1,15 +1,10 @@
 import subprocess
 import asyncio
 import time
-import argparse
 import glob
+import common
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--taskType', type=str, default="free")
-parser.add_argument('--taskNumber', type=int, default=1)
-parser.add_argument('--flipImage', action='store_true')
-args = parser.parse_args()
-
+args = common.load_args()
 
 async def view_task(task_number, task_type, flipImage):
     '''課題のステート画面を起動する'''

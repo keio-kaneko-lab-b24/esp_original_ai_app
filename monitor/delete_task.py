@@ -1,14 +1,8 @@
 import os
-import argparse
+import common
 
-# do_monitor, do_task, do_stdio_task, view_monitor, view_stateで共通
-parser = argparse.ArgumentParser()
-parser.add_argument('--taskNumber', type=int, default=0)
-parser.add_argument('--taskType', type=str)
-args = parser.parse_args()
-
-monitor_file = f"monitor/file/monitor/monitor_{args.taskType}_{args.taskNumber}.txt"
-label_file = f"monitor/file/label/label_{args.taskType}_{args.taskNumber}.txt"
+args = common.load_args()
+monitor_file, label_file = common.load_files(args.taskType, args.taskNumber)
 
 try:
     os.remove(monitor_file)

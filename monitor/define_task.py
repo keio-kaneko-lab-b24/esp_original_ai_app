@@ -1,8 +1,6 @@
 import json
 
 # タスク定義
-
-
 def define_task(task_type):
 
     # パラメータ

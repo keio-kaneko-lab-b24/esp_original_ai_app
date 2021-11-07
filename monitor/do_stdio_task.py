@@ -2,23 +2,12 @@
 # 標準入力によるタスク
 # =====================
 
-import os
 import re
-import argparse
-import time
-import pygame.mixer
-import json
 from define_task import define_task
+import common
 
-# do_monitor, do_task, do_stdio_task, view_monitor, view_stateで共通
-parser = argparse.ArgumentParser()
-parser.add_argument('--taskNumber', type=int, default=0)
-parser.add_argument('--taskType', type=str)
-args = parser.parse_args()
-
-monitor_file = f"monitor/file/monitor/monitor_{args.taskType}_{args.taskNumber}.txt"
-label_file = f"monitor/file/label/label_{args.taskType}_{args.taskNumber}.txt"
-# ここまで
+args = common.load_args()
+monitor_file, label_file = common.load_files(args.taskType, args.taskNumber)
 
 
 def instruct(instruction):
@@ -35,7 +24,10 @@ def instruct(instruction):
 
     # 教師として書き込み
     with open(label_file, "a") as f:
-        f.write(f"{t}: {instruction}\n")
+        try:
+            f.write(f"{t}: {instruction}\n")
+        except:
+            return False
 
     # コマンドラインへ表示
     print(f"指示-> {instruction}をしてください。\n")
@@ -48,11 +40,14 @@ while True:
     str = input("入力してください[r:rock, p:paper, n:rest, q:quit]\n")
     print(f"入力: {str}")
     if str == "r":
-        instruct("rock")
+        result = instruct("rock")
     elif str == "p":
-        instruct("paper")
+        result = instruct("paper")
     elif str == "n":
-        instruct("rest")
+        result = instruct("rest")
     elif str == "q":
         print("*** 入力を終了します ***")
         break
+
+    if not result:
+        print("!! 入力がありません。筋電計が接続されていることを確認してください。 !!")

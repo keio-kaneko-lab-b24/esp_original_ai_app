@@ -1,25 +1,15 @@
-import random
 import re
-import os
 import numpy as np
 from itertools import count
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.animation import FuncAnimation
-import argparse
 import time
 import json
+import common
 
-# do_monitor, do_task, do_stdio_task, view_monitor, view_stateで共通
-parser = argparse.ArgumentParser()
-parser.add_argument('--taskNumber', type=int, default=0)
-parser.add_argument('--taskType', type=str)
-args = parser.parse_args()
-
-monitor_file = f"monitor/file/monitor/monitor_{args.taskType}_{args.taskNumber}.txt"
-label_file = f"monitor/file/label/label_{args.taskType}_{args.taskNumber}.txt"
-# ここまで
+args = common.load_args()
+monitor_file, label_file = common.load_files(args.taskType, args.taskNumber)
 
 # パラメータ
 with open("param.json") as f:
@@ -90,15 +80,6 @@ def load():
 
     with open(monitor_file, "r") as file:
         for line in file.readlines():
-
-            # # 生データ
-            # mc = re.match("^([ef]): ([+-]?\\d+(?:\\.\\d+)?)\n", line)
-            # if mc:
-            #     if mc[1] == "e":
-            #         extensor_row.append(int(float(mc[2])))
-            #     else:
-            #         flexor_row.append(int(float(mc[2])))
-            #     continue
 
             # 信号処理後データ
             mc = re.match("^(e_sp): ([+-]?\\d+(?:\\.\\d+)?)\n", line)

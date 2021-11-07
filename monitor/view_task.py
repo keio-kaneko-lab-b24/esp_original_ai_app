@@ -1,19 +1,11 @@
 import re
 import cv2
-import argparse
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import common
 
-# 設定値
-parser = argparse.ArgumentParser()
-parser.add_argument('--taskNumber', type=int, default=0)
-parser.add_argument('--taskType', type=str)
-parser.add_argument('--flipImage', action='store_true')
-args = parser.parse_args()
-
-monitor_file = f"monitor/file/monitor/monitor_{args.taskType}_{args.taskNumber}.txt"
-label_file = f"monitor/file/label/label_{args.taskType}_{args.taskNumber}.txt"
-# ここまで
+args = common.load_args()
+monitor_file, label_file = common.load_files(args.taskType, args.taskNumber)
 
 fig = plt.figure(figsize=(5, 5))
 ax = fig.add_subplot(111)
