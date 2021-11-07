@@ -30,11 +30,9 @@ def fix_times(times):
             fixed_times[t_i] = times[t_i - 1] + 3000
     return fixed_times
 
-# ===
-
 
 def load_label_data(task_name, task_num):
-    # input
+    '''labelファイルから教示ラベルを読み込む'''
     try:
         with open(label_file_path + f"label_{task_name}_{task_num}.txt", "r") as f:
             times = []
@@ -56,11 +54,9 @@ def load_label_data(task_name, task_num):
 
     return df_label
 
-# ===
-
 
 def load_emg_sp_data(task_name, task_num):
-    # 信号処理後筋電
+    '''monotorファイルからRMS筋電を読み込む'''
     try:
         with open(monitor_file_path + f"monitor_{task_name}_{task_num}.txt", "r") as f:
             lines = f.readlines()
@@ -103,6 +99,7 @@ def load_emg_sp_data(task_name, task_num):
 
 
 def load_sp_dataset(task_name, task_num):
+    '''label, monotorファイルから，教示信号とRMS筋電のデータセットを作成する'''
     df_label = load_label_data(task_name, task_num)
     df_emg_sp = load_emg_sp_data(task_name, task_num)
 
@@ -119,7 +116,7 @@ def load_sp_dataset(task_name, task_num):
 
 
 def get_task_num(task_name):
-    # 使用可能なtask_num一覧を取得する
+    '''使用可能なtask_num一覧を取得する'''
     label_files = glob.glob(f"{label_file_path}/*{task_name}_[0-9]*")
     label_num = [int(re.match(
         f".+label_{task_name}_(.+).txt", label_file)[1]) for label_file in label_files]
@@ -130,10 +127,9 @@ def get_task_num(task_name):
 
     return list(set(label_num) & set(monitor_num))
 
-# 教示番号（count_idx）をつける
-
 
 def add_count_idx(df):
+    '''データセットに教示番号（count_idx）を付与する'''
     df = df.reset_index(drop=True)
 
     last_label = None

@@ -4,31 +4,6 @@ import itertools
 
 param_file = "./src/param_ml.h"
 
-df_sp = pd.read_json("./ml/dataset/sp.json")
-
-# sp版
-count_idx_list = df_sp.count_idx.unique()
-
-X = []
-y = []
-for count_idx in count_idx_list:
-    _df = df_sp[df_sp["count_idx"] == count_idx]
-
-    if len(_df) < 2:
-        continue
-
-    _df = _df[1:]  # 最初のひとつは前の試技の値が残る
-    _x = _df[["extensor_sp", "flexor_sp"]].to_numpy()
-    _y = _df["label"].to_numpy()[0]
-    X.append(_x)
-    y.append(_y)
-
-X = np.array(X)
-y = np.array(y)
-
-# 性能評価
-X_max = np.array([x.transpose(1, 0).max(axis=1) for x in X])
-
 
 def calc_(t, y, a):
     pos_num = sum([_ == a for _ in t])
@@ -74,8 +49,36 @@ def calc_score_threshold(rock_f_lower_threshold, rock_e_upper_threshold, paper_e
     }
 
 
+# =======
+# 学習用データセットの準備
+# =======
+df_sp = pd.read_json("./ml/dataset/sp.json")
+count_idx_list = df_sp.count_idx.unique()
+
+X = []
+y = []
+for count_idx in count_idx_list:
+    _df = df_sp[df_sp["count_idx"] == count_idx]
+
+    if len(_df) < 2:
+        continue
+
+    _df = _df[1:]  # 最初のひとつは前の試技の値が残る
+    _x = _df[["extensor_sp", "flexor_sp"]].to_numpy()
+    _y = _df["label"].to_numpy()[0]
+    X.append(_x)
+    y.append(_y)
+
+X = np.array(X)
+y = np.array(y)
+
+# =======
 # 学習
 # TODO: CNNに切り替え
+# =======
+
+# 各試技内での最大値を取得
+X_max = np.array([x.transpose(1, 0).max(axis=1) for x in X])
 
 # グーを最適化
 d = [calc_score_threshold(rock_f_lower_threshold, rock_e_upper_threshold, 0, 0)
