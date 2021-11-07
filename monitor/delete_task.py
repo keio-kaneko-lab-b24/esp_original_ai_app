@@ -1,4 +1,4 @@
-import subprocess
+import os
 import argparse
 
 # do_monitor, do_task, do_stdio_task, view_monitor, view_stateで共通
@@ -9,8 +9,15 @@ args = parser.parse_args()
 
 monitor_file = f"monitor/file/monitor/monitor_{args.taskType}_{args.taskNumber}.txt"
 label_file = f"monitor/file/label/label_{args.taskType}_{args.taskNumber}.txt"
-# ここまで
 
+try:
+    os.remove(monitor_file)
+    print(f"deleted monitor: {args.taskType} {args.taskNumber}")
+except:
+    pass
 
-subprocess.call(
-    f"pio device monitor > {monitor_file}", shell=True)
+try:
+    os.remove(label_file)
+    print(f"deleted label: {args.taskType} {args.taskNumber}")
+except:
+    pass

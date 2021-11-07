@@ -11,7 +11,7 @@ import argparse
 import time
 import json
 
-# do_monitor, do_task, view_monitor, view_stateで共通
+# do_monitor, do_task, do_stdio_task, view_monitor, view_stateで共通
 parser = argparse.ArgumentParser()
 parser.add_argument('--taskNumber', type=int, default=0)
 parser.add_argument('--taskType', type=str)
@@ -80,6 +80,7 @@ def load():
     flexor_processed = []
     gu = []
     pa = []
+    useML = True
     flexor_threshold = 0
     extensor_threshold = 0
     rock_flexor_lower_limit = 0
@@ -118,6 +119,14 @@ def load():
                 pa.append(float(gr.group(2)))
                 continue
 
+            # UseMLパラメータ
+            gr = re.search("UseML is (True|False)", line)
+            if gr:
+                if gr.group(1) == "True":
+                    useML = True
+                elif gr.group(1) == "False":
+                    useML = False
+
             # 閾値
             gr = re.search("ExtensorThreshold: ([0-9\\.]+)", line)
             if gr:
@@ -138,7 +147,7 @@ def load():
             if gr:
                 paper_flexor_upper_limit = gr.group(1)
 
-    return extensor_row, flexor_row, extensor_processed, flexor_processed, gu, pa, \
+    return extensor_row, flexor_row, extensor_processed, flexor_processed, gu, pa, useML,\
         extensor_threshold, flexor_threshold, rock_flexor_lower_limit, rock_extensor_upper_limit,\
         paper_extensor_lower_limit, paper_flexor_upper_limit
 
@@ -150,7 +159,7 @@ def animate(i):
     ax2.cla()
     ax3.cla()
 
-    extensor_row, flexor_row, extensor_processed, flexor_processed, gu, pa, extensor_threshold, flexor_threshold, rock_flexor_lower_limit, rock_extensor_upper_limit, paper_extensor_lower_limit, paper_flexor_upper_limit = load()
+    extensor_row, flexor_row, extensor_processed, flexor_processed, gu, pa, useML, extensor_threshold, flexor_threshold, rock_flexor_lower_limit, rock_extensor_upper_limit, paper_extensor_lower_limit, paper_flexor_upper_limit = load()
 
     try:
         # 生データ
@@ -195,11 +204,14 @@ def animate(i):
         ax2.plot(axis_x, np.zeros(len(pa)), alpha=0)
         ax2.legend(loc='upper right')
 
-        title_text = "THRESHOLD\n"
-        threshold_text1 = f"Rock :  Flexor  > {rock_flexor_lower_limit}, Extensor < {rock_extensor_upper_limit}\n"
-        threshold_text2 = f"Paper: Extensor > {paper_extensor_lower_limit},  Flexor  < {paper_flexor_upper_limit}"
-        threshold_text = threshold_text1 + threshold_text2
-        ax2.set_title(title_text + threshold_text, size=14)
+        useML_text = "ML: True\n" if useML else "ML: False\n"
+        if useML:
+            threshold_text = f"Rock: {flexor_threshold}\nPaper: {extensor_threshold}"
+        else:
+            threshold_text1 = f"Rock :  Flexor  > {rock_flexor_lower_limit}, Extensor < {rock_extensor_upper_limit}\n"
+            threshold_text2 = f"Paper: Extensor > {paper_extensor_lower_limit},  Flexor  < {paper_flexor_upper_limit}"
+            threshold_text = threshold_text1 + threshold_text2
+        ax2.set_title(useML_text + threshold_text, size=14)
 
     except:
         pass
