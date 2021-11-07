@@ -15,7 +15,6 @@ def instruct(instruction):
 
     # monitor読み込み
     # 10ms以下で完了できる
-
     with open(monitor_file, "r") as f:
         for line in f.readlines()[::-1]:
             if "time: " in line:

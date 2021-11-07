@@ -87,7 +87,7 @@ def load_emg_sp_data(task_name, task_num):
             if mc[1] == "f_sp":
                 _flexor_sp = float(mc[2])
 
-        if (_time != False) & (_extensor_sp != False) & (_flexor_sp != False):
+        if (_time is not False) & (_extensor_sp is not False) & (_flexor_sp is not False):
             times.append(_time)
             extensor_sps.append(_extensor_sp)
             flexor_sps.append(_flexor_sp)

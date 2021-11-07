@@ -13,6 +13,11 @@ X = []
 y = []
 for count_idx in count_idx_list:
     _df = df_sp[df_sp["count_idx"] == count_idx]
+
+    if len(_df) < 2:
+        continue
+
+    _df = _df[1:]  # 最初のひとつは前の試技の値が残る
     _x = _df[["extensor_sp", "flexor_sp"]].to_numpy()
     _y = _df["label"].to_numpy()[0]
     X.append(_x)
@@ -68,6 +73,9 @@ def calc_score_threshold(rock_f_lower_threshold, rock_e_upper_threshold, paper_e
         "f_paper": round(f_paper, 2)
     }
 
+
+# 学習
+# TODO: CNNに切り替え
 
 # グーを最適化
 d = [calc_score_threshold(rock_f_lower_threshold, rock_e_upper_threshold, 0, 0)
