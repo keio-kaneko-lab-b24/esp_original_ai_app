@@ -72,7 +72,9 @@ def load_emg_sp_data(task_name, task_num):
 
     for line in lines:
         if "time:" in line:
-            _time = int(re.sub("[^.0-9]", "", line))
+            # 通常は「time: 12505」のようになっているが，
+            # 稀に「out1 = 0, out2 = 0;time: 120585」のようになっている場合があるのでre.matchで対応
+            _time = int(re.match(".*time:\ ?([.0-9]+)", line)[1])
 
         mc = re.match("^(e_sp): ([+-]?\\d+(?:\\.\\d+)?)\n", line)
         if mc:
