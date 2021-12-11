@@ -81,9 +81,9 @@ def main(df_sp, max_score):
     X_max = np.array([x.transpose(1, 0).max(axis=1) for x in X])
 
     extensor_range = np.arange(
-        np.min(X_max[0])*0.99, np.max(X_max[0])*1.01, 0.001)
+        np.min(X_max[:, 0])*0.99, np.max(X_max[:, 0])+0.0011, 0.001)
     flexor_range = np.arange(
-        np.min(X_max[1])*0.99, np.max(X_max[1])*1.01, 0.001)
+        np.min(X_max[:, 1])*0.99, np.max(X_max[:, 1])+0.0011, 0.001)
 
     # グーを最適化
     d = [calc_score_threshold(X_max, y, rock_f_lower_threshold, rock_e_upper_threshold, 0, 0)
