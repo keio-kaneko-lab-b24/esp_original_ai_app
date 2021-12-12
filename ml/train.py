@@ -158,12 +158,15 @@ max_score, _ = main(df_sp, 0)
 # 3ファイルまで
 for i in range(2):
 
+    drop_flag = False
     for task_id in task_ids:
         _df_sp = df_sp[df_sp["task_id"] != task_id]
         max_score, update = main(_df_sp, max_score)
         if update:
             drop_task_id = task_id
+            drop_flag = True
 
-    df_sp = df_sp[df_sp["task_id"] != drop_task_id]
+    if drop_flag:
+        df_sp = df_sp[df_sp["task_id"] != drop_task_id]
 
 print("\nfinish")
