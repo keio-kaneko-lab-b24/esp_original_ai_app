@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import shutil
 
 import plotly.graph_objects as go
 
@@ -67,6 +68,10 @@ def show_plot(sp):
     os.makedirs(f"./ml/dataset/images", exist_ok=True)
     fig.write_image(f"./ml/dataset/images/{task_name}_{task_num}.png")
 
+
+dirpath = os.path.join('ml', 'dataset', 'images')
+if os.path.exists(dirpath) and os.path.isdir(dirpath):
+    shutil.rmtree('./ml/dataset/images')
 
 sp_all = pd.read_json(f"./ml/dataset/sp.json")
 for _, sp in sp_all.groupby(["task_name", "task_num"]):
