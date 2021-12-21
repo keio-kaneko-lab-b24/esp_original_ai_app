@@ -64,8 +64,6 @@ def show_plot(sp):
         height=500,
     )
 
-    fig.show()
-
     os.makedirs(f"./ml/dataset/images", exist_ok=True)
     fig.write_image(f"./ml/dataset/images/{task_name}_{task_num}.png")
 
