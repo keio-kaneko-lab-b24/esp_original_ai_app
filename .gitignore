@@ -12,3 +12,7 @@ monitor/.*
 
 # ml
 ml/dataset/images
+ml/dataset/sp.json
+ml/dataset/sp_processed.json
+
+**/__pycache__
