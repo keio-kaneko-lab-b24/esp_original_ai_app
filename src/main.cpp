@@ -7,6 +7,7 @@
 #include "predictor.h"
 #include "emg.h"
 #include "param_ml.h"
+#include "signal_processor.h"
 
 TaskHandle_t TaskIO;
 TaskHandle_t TaskMain;
@@ -37,9 +38,9 @@ void TaskIOcode(void *pvParameters)
     // https://lang-ship.com/blog/work/esp32-freertos-l03-multitask/#toc12
     vTaskDelay(1);
 
+    // スレッドセーフな処理
     if (xSemaphoreTake(xMutex, (portTickType)100) == pdTRUE)
     {
-      // ブロックが必要な処理
       xSemaphoreGive(xMutex);
     }
   }
@@ -62,9 +63,11 @@ void TaskMaincode(void *pvParameters)
     // https://lang-ship.com/blog/work/esp32-freertos-l03-multitask/#toc12
     vTaskDelay(1);
 
+    // スレッドセーフな処理
     if (xSemaphoreTake(xMutex, (portTickType)100) == pdTRUE)
     {
-      // ブロックが必要な処理
+      SignalProcess();
+
       xSemaphoreGive(xMutex);
     }
 
