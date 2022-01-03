@@ -5,6 +5,8 @@ import os
 import re
 import glob
 import pandas as pd
+import time
+
 
 # パラメータ
 parser = argparse.ArgumentParser()
@@ -152,17 +154,42 @@ def add_count_idx(df):
     return df
 
 
+start_time = time.perf_counter()
+
 _df_sp_list = []
+use_tasks = []
+cannot_use_tasks = []
 for task_name in useTask:
 
     task_num_list = get_task_num(task_name)
     for task_num in task_num_list:
-        _df_sp = load_sp_dataset(task_name, task_num)
-        _df_sp_list.append(_df_sp)
-        print(f"use: {task_name} {task_num}")
+        try:
+            _df_sp = load_sp_dataset(task_name, task_num)
+            _df_sp_list.append(_df_sp)
+            use_tasks.append(f"{task_name} {task_num}")
+        except:
+            cannot_use_tasks.append(f"{task_name} {task_num}")
 
 df_sp = pd.concat(_df_sp_list)
 df_sp = add_count_idx(df_sp)
 
 # 保存
 df_sp.to_json(dataset_file_path + "sp.json", orient='records')
+
+end_time = time.perf_counter()
+
+# レポート
+print("\n**FINISH**\n")
+print(f"■ 経過時間\n{end_time - start_time: .1f}秒")
+if len(use_tasks) > 0:
+    print("■ 使用タスク")
+    for t in use_tasks:
+        print(t)
+
+if len(cannot_use_tasks) > 0:
+    print("■ 使用不可タスク")
+    for t in cannot_use_tasks:
+        print(t)
+
+print("■ データ数")
+print(f"{len(df_sp)}")

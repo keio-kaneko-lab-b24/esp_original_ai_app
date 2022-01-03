@@ -11,4 +11,6 @@ monitor/file/monitor/*.txt
 monitor/.*
 
 # ml
-ml/dataset/images
+ml/dataset
+
+**/__pycache__

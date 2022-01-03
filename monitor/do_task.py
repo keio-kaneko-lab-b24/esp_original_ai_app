@@ -74,7 +74,7 @@ while True:
 
         count += 1
         if count > 5:
-            raise EOFError("monitor.txtに不備があります。")
+            raise EOFError("monitor.txtに不備があります。\n筋電計が接続されていることを確認してください。")
     else:
         break
 

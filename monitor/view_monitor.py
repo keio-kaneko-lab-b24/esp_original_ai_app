@@ -58,7 +58,7 @@ while True:
 
         count += 1
         if count > 10:
-            raise EOFError(f"{monitor_file}に不備があります。")
+            raise EOFError(f"{monitor_file}に不備があります。\n筋電計が接続されていることを確認してください。")
     else:
         break
 

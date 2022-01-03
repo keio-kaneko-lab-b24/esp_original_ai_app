@@ -4,22 +4,17 @@
 
 // MLの出力から判定を行う場合
 motion PredictML(
-    float extensor_score,
-    float flexor_score,
-    float extensor_threshold,
-    float flexor_threshold)
+    float rock_score,
+    float paper_score,
+    float rest_score)
 {
-    if ((extensor_score > extensor_threshold) & (flexor_score > flexor_threshold))
-    {
-        return NONE;
-    }
-    else if (extensor_score > extensor_threshold)
-    {
-        return PAPER;
-    }
-    else if (flexor_score > flexor_threshold)
+    if ((rock_score > paper_score) & (rock_score > rest_score))
     {
         return ROCK;
+    }
+    else if (paper_score > rest_score)
+    {
+        return PAPER;
     }
     return NONE;
 }
