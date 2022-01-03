@@ -1,4 +1,10 @@
-const float normalize_min = 0.0;
-const float normalize_max = 0.974278;
-const float model_steps = 6;
-const float model_input_size = 2;
+#ifndef PARAM_H_
+#define PARAM_H_
+
+const float kNormalizeMax = 0.039442;
+const float kNormalizeMin = 0.001958;
+const int kModelInputWidth = 3;
+const int kModelInputHeight = 25;
+const int kChannleNumber = 2;
+
+#endif // PARAM_H_

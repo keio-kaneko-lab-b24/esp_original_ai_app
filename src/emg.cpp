@@ -11,8 +11,9 @@ volatile float extensor_values[EMG_LENGTH] = {0};
 volatile float flexor_values[EMG_LENGTH] = {0};
 volatile float ar_extensor_values[EMG_LENGTH] = {0};
 volatile float ar_flexor_values[EMG_LENGTH] = {0};
-volatile float s_extensor_values[EMG_LENGTH] = {0};
-volatile float s_flexor_values[EMG_LENGTH] = {0};
+volatile float s_extensor_values[kModelInputWidth] = {0};
+volatile float s_flexor_values[kModelInputWidth] = {0};
+volatile float buffer_input[kModelInputWidth * kModelInputHeight * kChannleNumber] = {0};
 
 // EMGの値を更新する
 // @value （例）"0.012345, F: 0.056789, E5"

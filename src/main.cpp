@@ -8,6 +8,11 @@
 #include "emg.h"
 #include "param_ml.h"
 #include "signal_processor.h"
+#include "model.h"
+#include "param.h"
+#include "NeuralNetwork.h"
+
+NeuralNetwork *nn;
 
 TaskHandle_t TaskIO;
 TaskHandle_t TaskMain;
@@ -52,7 +57,7 @@ void TaskMaincode(void *pvParameters)
   for (;;)
   {
     // 10Hz
-    if ((micros() - last_process_micros) < 100 * 1000)
+    if ((micros() - last_process_micros) < 500 * 10000)
     {
       continue;
     }
@@ -83,6 +88,26 @@ void TaskMaincode(void *pvParameters)
 
     // ロボットへ出力
     HandleOutput(motion);
+
+    // float buffer_input[BUFFER_SIZE] = {
+    //     1., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1.,
+    //     0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0.,
+    //     0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
+    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
+
+    float *input_buffer = nn->getInputBuffer();
+    for (int i = 0; i < BUFFER_SIZE; i++)
+    {
+      input_buffer[i] = buffer_input[i];
+    }
+
+    float *result = nn->predict();
+    Serial.printf("%.2f, %.2f, %.2f\n", result[0], result[1], result[2]);
   }
 };
 
@@ -94,6 +119,8 @@ void setup()
   SetUpBLE();
 
   OutputSetup();
+
+  nn = new NeuralNetwork();
 
   xMutex = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(TaskIOcode, "TaskIO", 4096, NULL, 2, &TaskIO, 0); //Task1実行
