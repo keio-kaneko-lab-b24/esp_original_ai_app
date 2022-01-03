@@ -2,12 +2,14 @@ import pandas as pd
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
+
 @dataclass_json
 @dataclass(frozen=True)
 class NormalizeStats:
     normalize_min: float
     normalize_max: float
-        
+
+
 @dataclass_json
 @dataclass(frozen=True)
 class RestingStats:
@@ -16,10 +18,11 @@ class RestingStats:
     flexor_mean: float
     flexor_std: float
 
+
 def _get_resting_stats(sp):
-    resting_state = sp[sp.count_idx==sp.count_idx.min()]
+    resting_state = sp[sp.count_idx == sp.count_idx.min()]
     label_unique = resting_state.label.unique()
-    if label_unique[0]=="rest" and len(label_unique)==1:
+    if label_unique[0] == "rest" and len(label_unique) == 1:
         return {
             "extensor_std": resting_state["extensor_sp"].std(),
             "flexor_std": resting_state["flexor_sp"].std(),
@@ -28,6 +31,7 @@ def _get_resting_stats(sp):
         }
     else:
         return {}
+
 
 def get_resting_stats(sp):
     """
@@ -48,11 +52,12 @@ def get_resting_stats(sp):
     flexor_rs_std, flexor_rs_mean = flexor_rs["flexor_std"], flexor_rs["flexor_mean"]
 
     return RestingStats(
-        extensor_std = extensor_rs_std,
-        flexor_std = flexor_rs_std,
-        extensor_mean =  extensor_rs_mean,
-        flexor_mean =  flexor_rs_mean,
+        extensor_std=extensor_rs_std,
+        flexor_std=flexor_rs_std,
+        extensor_mean=extensor_rs_mean,
+        flexor_mean=flexor_rs_mean,
     )
+
 
 def normalize(sp, quantile=0.9, std_weight=1, only_denoise=False):
     '''
@@ -68,31 +73,35 @@ def normalize(sp, quantile=0.9, std_weight=1, only_denoise=False):
     '''
     # RestingStatsを取得する
     resting_stats = get_resting_stats(sp)
-    
+
     # RestingStateの平均+std_weight*SDを0に
     extensor_min = resting_stats.extensor_mean
     extensor_std = resting_stats.extensor_std
     flexor_min = resting_stats.flexor_mean
     flexor_std = resting_stats.flexor_std
-    normalize_min = max(extensor_min + std_weight * extensor_std, flexor_min + std_weight * flexor_std)
+    normalize_min = max(extensor_min + std_weight *
+                        extensor_std, flexor_min + std_weight * flexor_std)
 
     # 試技中の分位数{quantile}%を1に
-    extensor_max = sp[sp.label=="paper"]["extensor_sp"].quantile(quantile)
-    flexor_max = sp[sp.label=="rock"]["flexor_sp"].quantile(quantile)
+    extensor_max = sp[sp.label == "paper"]["extensor_sp"].quantile(quantile)
+    flexor_max = sp[sp.label == "rock"]["flexor_sp"].quantile(quantile)
     normalize_max = max(extensor_max, flexor_max)
 
     # 正規化
     if only_denoise:
-        sp[["extensor_sp", "flexor_sp"]] = sp[["extensor_sp", "flexor_sp"]].applymap(lambda x: max(0, x - normalize_min))
+        sp[["extensor_sp", "flexor_sp"]] = sp[["extensor_sp", "flexor_sp"]
+                                              ].applymap(lambda x: max(0, x - normalize_min))
     else:
-        sp[["extensor_sp", "flexor_sp"]] = sp[["extensor_sp", "flexor_sp"]].applymap(lambda x: (x - normalize_min) / (normalize_max - normalize_min))
-        sp[["extensor_sp", "flexor_sp"]] = sp[["extensor_sp", "flexor_sp"]].clip(0, 1)
+        sp[["extensor_sp", "flexor_sp"]] = sp[["extensor_sp", "flexor_sp"]].applymap(
+            lambda x: (x - normalize_min) / (normalize_max - normalize_min))
+        sp[["extensor_sp", "flexor_sp"]] = sp[[
+            "extensor_sp", "flexor_sp"]].clip(0, 1)
 
     return sp, NormalizeStats(
         normalize_min=normalize_min, normalize_max=normalize_max)
 
 
-def denoise(sp, resting_stats: RestingStats, std_weight = 0.5):
+def denoise(sp, resting_stats: RestingStats, std_weight=0.5):
     """
     RestingStatsを使用して安静時状態のノイズを除去する。
     Args:
@@ -107,6 +116,8 @@ def denoise(sp, resting_stats: RestingStats, std_weight = 0.5):
     extensor_mean = resting_stats.extensor_mean
     flexor_std = resting_stats.flexor_std
     flexor_mean = resting_stats.flexor_mean
-    sp.extensor_sp = sp.extensor_sp.apply(lambda x: extensor_mean if abs(x - extensor_mean) < extensor_std * std_weight else x)
-    sp.flexor_sp = sp.flexor_sp.apply(lambda x: flexor_mean if abs(x - flexor_mean) < flexor_std * std_weight else x)    
+    sp.extensor_sp = sp.extensor_sp.apply(lambda x: extensor_mean if abs(
+        x - extensor_mean) < extensor_std * std_weight else x)
+    sp.flexor_sp = sp.flexor_sp.apply(lambda x: flexor_mean if abs(
+        x - flexor_mean) < flexor_std * std_weight else x)
     return sp

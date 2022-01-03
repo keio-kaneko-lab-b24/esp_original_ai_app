@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import LeaveOneOut
 
+
 def data_cnn_expand(x, cnn_height):
     CNN_HEIGHT = cnn_height
     expanded_x = np.zeros((x.shape[0], x.shape[1], x.shape[2], CNN_HEIGHT))
@@ -14,43 +15,45 @@ def data_cnn_expand(x, cnn_height):
     expanded_x = expanded_x.transpose((0, 1, 3, 2))
     return expanded_x
 
+
 def get_feature_from_sp(sp, label_to_int, steps=6, cnn_height=10):
-    
+
     x = []
     y = []
     p = []
     # rock, paper
     for label in ["rock", "paper"]:
-        cid_list = sp[sp.label==label].count_idx.unique()
+        cid_list = sp[sp.label == label].count_idx.unique()
         for cid in cid_list:
-            rep = sp[sp.count_idx==cid]
+            rep = sp[sp.count_idx == cid]
 
-            for i in range(int(len(rep) / steps) - 1): # 最後の1秒は使用しない
+            for i in range(int(len(rep) / steps) - 1):  # 最後の1秒は使用しない
                 _rep = rep.iloc[i*steps:(i+1)*steps]
                 x.append(_rep[["extensor_sp", "flexor_sp"]].values.tolist())
                 y.append(label_to_int[label])
                 p.append(_rep.index.tolist()[-1])
-     
+
     # rest
     for label in ["rest"]:
-        cid_list = sp[sp.label==label].count_idx.unique()
-        for cid in cid_list[::2]: # restは多くなりがちなので、1/2のみ使用する
-            rep = sp[sp.count_idx==cid]
+        cid_list = sp[sp.label == label].count_idx.unique()
+        for cid in cid_list[::2]:  # restは多くなりがちなので、1/2のみ使用する
+            rep = sp[sp.count_idx == cid]
 
-            for i in range(1, int(len(rep) / steps) - 1): # 最初と最後の1秒は使用しない
+            for i in range(1, int(len(rep) / steps) - 1):  # 最初と最後の1秒は使用しない
                 _rep = rep.iloc[i*steps:(i+1)*steps]
                 x.append(_rep[["extensor_sp", "flexor_sp"]].values.tolist())
                 y.append(label_to_int[label])
                 p.append(_rep.index.tolist()[-1])
-                
+
     x = np.array(x)
     # cnn用に整形
     x = data_cnn_expand(x, cnn_height)
     x = x.astype(np.float32)
     y = np.array(y)
     p = np.array(p)
-    
+
     return x, y, p
+
 
 def calc_result(y, t, threshold=0.5):
     int_to_label = {
@@ -67,25 +70,26 @@ def calc_result(y, t, threshold=0.5):
 
     for _y, _t in zip(y, t):
         for __y, __t in zip(_y, _t):
-            __i = np.argmax(__t) # 最大値を使用
-            if __i in [0,1]:
+            __i = np.argmax(__t)  # 最大値を使用
+            if __i in [0, 1]:
                 # 閾値以下ならrestにする
                 if __t[__i] < threshold:
                     __i = 2
             result[int_to_label[__y]][int_to_label[__i]] += 1
-            
+
     return result
 
 
 def model_train(model, sp, label_to_int, steps, cnn_height, detail=False):
-    
+
     result = {}
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=2)
-    
+    early_stopping = tf.keras.callbacks.EarlyStopping(
+        monitor='loss', patience=2)
+
     # バリデーションによる性能評価をする場合
     if detail:
         sp["task"] = sp["task_name"] + sp["task_num"].apply(str)
-        task_to_int = {t:i for i,t in enumerate(sp["task"].unique())}
+        task_to_int = {t: i for i, t in enumerate(sp["task"].unique())}
         sp["task"] = sp["task"].apply(lambda x: task_to_int[x])
 
         loo = LeaveOneOut()
@@ -99,11 +103,15 @@ def model_train(model, sp, label_to_int, steps, cnn_height, detail=False):
         for train_index, test_index in loo.split(task_to_int):
             sp_train = sp[sp["task"].apply(lambda x: x in train_index)]
             sp_test = sp[sp["task"].apply(lambda x: x in test_index)]
-            x_train, y_train, p_train = get_feature_from_sp(sp_train, label_to_int, steps=steps, cnn_height=cnn_height)
-            x_test, y_test, p_test = get_feature_from_sp(sp_test, label_to_int, steps=steps, cnn_height=cnn_height)
+            x_train, y_train, p_train = get_feature_from_sp(
+                sp_train, label_to_int, steps=steps, cnn_height=cnn_height)
+            x_test, y_test, p_test = get_feature_from_sp(
+                sp_test, label_to_int, steps=steps, cnn_height=cnn_height)
 
-            early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=2)
-            model.fit(x_train, y_train, epochs=500, callbacks=[early_stopping], verbose=0)
+            early_stopping = tf.keras.callbacks.EarlyStopping(
+                monitor='loss', patience=2)
+            model.fit(x_train, y_train, epochs=500,
+                      callbacks=[early_stopping], verbose=0)
 
             # 分析用にデータ蓄積
             x.append(x_test)
@@ -118,18 +126,18 @@ def model_train(model, sp, label_to_int, steps, cnn_height, detail=False):
             t.append(t_test)
 
         result = calc_result(y, t, threshold=0.5)
-        
-    
+
     # 特徴量を抽出する
-    x, y, _ = get_feature_from_sp(sp, label_to_int, steps=steps, cnn_height=cnn_height)
+    x, y, _ = get_feature_from_sp(
+        sp, label_to_int, steps=steps, cnn_height=cnn_height)
     # 学習する
     model.fit(x, y, epochs=500, callbacks=[early_stopping], verbose=0)
-    
+
     return model, x, y, result
-    
+
 
 def convert_to_tflite(model, model_dir, dim, optimize=True):
-    
+
     run_model = tf.function(lambda x: model(x))
     # 重要。InputShapeを固定する。
     BATCH_SIZE = 1
@@ -146,12 +154,12 @@ def convert_to_tflite(model, model_dir, dim, optimize=True):
 
     # 変換
     tflite_model = converter.convert()
-    
+
     return tflite_model
 
 
 def check_if_model_and_tfmodel_is_almost_equal(model, tflite_model, x):
-    
+
     # Run the model with TensorFlow to get expected results.
     TEST_CASES = 10
 

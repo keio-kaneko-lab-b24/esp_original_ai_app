@@ -4,13 +4,15 @@ import os
 import random as rn
 import tensorflow as tf
 import subprocess
-import json
+import time
 
-from normalize import normalize
-from delete_missrep import delete_missrep
-from delete_spike import delete_spike
-from delete_last_cid import delete_last_cid
-from util_ml import model_train, convert_to_tflite, check_if_model_and_tfmodel_is_almost_equal
+from lib.normalize import normalize
+from lib.delete_missrep import delete_missrep
+from lib.delete_spike import delete_spike
+from lib.delete_last_cid import delete_last_cid
+from lib.util_ml import model_train, convert_to_tflite, check_if_model_and_tfmodel_is_almost_equal
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # シードの固定
 # https://pretagteam.com/question/results-not-reproducible-with-keras-and-tensorflow-in-python
@@ -25,7 +27,6 @@ tf.random.set_seed(1234)
 LABEL_TO_INT = {"rock": 0, "paper": 1, "rest": 2}  # 各ラベルに対する出力ノード
 INPUT_SIZE = 2  # 筋電の数。デフォルト：2 （EDC, FDP）
 PARAM_PATH = "./src/param.h"  # パラメータを保存するパス
-RESULT_PATH = "./ml/dataset/result.json"  # 　学習結果を保存するパス
 MODEL_DIR = "./ml/dataset/model"  # Kerasモデルのパス
 TFLITE_MODEL_PATH = "./ml/dataset/model.tflite"  # TFLiteモデルのパス
 C_MODEL_PATH = "./src/model.cpp"  # Cモデルのパス
@@ -82,7 +83,7 @@ def main(sp):
     # 学習
     # ====
 
-    # cnn
+    # CNNモデルの構築
     model = tf.keras.models.Sequential([
         tf.keras.layers.Input(
             shape=(STEPS, CNN_HEIGHT, INPUT_SIZE), name='input'),
@@ -97,7 +98,7 @@ def main(sp):
                   loss='sparse_categorical_crossentropy',
                   metrics=['accuracy'])
 
-    # モデルを学習する
+    # CNNモデルの学習
     model, x, y, result = model_train(
         model,
         sp,
@@ -106,10 +107,6 @@ def main(sp):
         cnn_height=CNN_HEIGHT,
         detail=MODEL_TRAIN_DETAIL,
     )
-
-    # 学習結果を保存
-    with open(RESULT_PATH, 'w') as f:
-        json.dump(result, f)
 
     # ModelをTFLiteModelに変換する
     tflite_model = convert_to_tflite(model, model_dir=MODEL_DIR, dim=[
@@ -139,6 +136,13 @@ def main(sp):
     return result
 
 
+start_time = time.perf_counter()
+
 sp = pd.read_json("./ml/dataset/sp.json")
 result = main(sp)
-print(result)
+
+end_time = time.perf_counter()
+
+print("\n**FINISH**\n")
+print(f"■ 経過時間\n{end_time - start_time: .1f}秒")
+print(f"■ 学習結果\n", result)
