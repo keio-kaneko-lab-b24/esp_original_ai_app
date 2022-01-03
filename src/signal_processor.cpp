@@ -39,6 +39,14 @@ void SignalProcess()
         EMG_LENGTH,
         kModelInputWidth);
 
+    // テスト
+    // s_extensor_values[0] = 0.0;
+    // s_extensor_values[1] = 0.0;
+    // s_extensor_values[2] = 0.0;
+    // s_flexor_values[0] = 0.04;
+    // s_flexor_values[1] = 0.1;
+    // s_flexor_values[2] = 0.1;
+
     Serial.println("after normalize");
     for (int i = 0; i < kModelInputWidth; ++i)
     {
