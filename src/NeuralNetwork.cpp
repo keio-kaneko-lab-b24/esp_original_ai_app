@@ -17,7 +17,7 @@ NeuralNetwork::NeuralNetwork()
 {
     error_reporter = new tflite::MicroErrorReporter();
 
-    model = tflite::GetModel(model_tflite);
+    model = tflite::GetModel(__ml_dataset_model_tflite);
     if (model->version() != TFLITE_SCHEMA_VERSION)
     {
         TF_LITE_REPORT_ERROR(error_reporter, "Model provided is schema version %d not equal to supported version %d.",

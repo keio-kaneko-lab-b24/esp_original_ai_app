@@ -11,8 +11,6 @@ monitor/file/monitor/*.txt
 monitor/.*
 
 # ml
-ml/dataset/images
-ml/dataset/sp.json
-ml/dataset/sp_processed.json
+ml/dataset
 
 **/__pycache__

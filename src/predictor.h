@@ -4,10 +4,9 @@
 #include "motion.h"
 
 extern motion PredictML(
-    float extensor_score,
-    float flexor_score,
-    float extensor_threshold,
-    float flexor_threshold);
+    float rock_score,
+    float paper_score,
+    float rest_score);
 
 motion PredictThreshold(
     float extensor_value,

@@ -47,7 +47,6 @@ void SignalProcess()
     // s_flexor_values[1] = 0.1;
     // s_flexor_values[2] = 0.1;
 
-    Serial.println("after normalize");
     for (int i = 0; i < kModelInputWidth; ++i)
     {
         sprintf(signal_process_s, "%d: %f, %f", i, s_extensor_values[i], s_flexor_values[i]);
@@ -145,8 +144,8 @@ void Categorize(
         int base_index = i * input_height * 2;
         int e_index = base_index + (e_index_ * 2);
         int f_index = base_index + (f_index_ * 2) + 1;
-        sprintf(signal_process_s, "index-> %d %d", e_index, f_index);
-        Serial.println(signal_process_s);
+        // sprintf(signal_process_s, "index-> %d %d", e_index, f_index);
+        // Serial.println(signal_process_s);
         buffer_input[e_index] = 1.0;
         buffer_input[f_index] = 1.0;
     }

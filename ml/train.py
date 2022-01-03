@@ -1,172 +1,144 @@
 import pandas as pd
 import numpy as np
-import itertools
+import os
+import random as rn
+import tensorflow as tf
+import subprocess
+import json
 
-param_file = "./src/param_ml.h"
+from normalize import normalize
+from delete_missrep import delete_missrep
+from delete_spike import delete_spike
+from delete_last_cid import delete_last_cid
+from util_ml import model_train, convert_to_tflite, check_if_model_and_tfmodel_is_almost_equal
 
+# シードの固定
+# https://pretagteam.com/question/results-not-reproducible-with-keras-and-tensorflow-in-python
+os.environ['PYTHONHASHSEED'] = '0'
+np.random.seed(37)
+rn.seed(1254)
+tf.random.set_seed(1234)
 
-def calc_(t, y, a):
-    pos_num = sum([_ == a for _ in t])
-    all_num = sum([_ == a for _ in y])
-    ans_num = len(t)
-    recall = pos_num / all_num if all_num != 0 else 0
-    precision = pos_num / ans_num if ans_num != 0 else 0
+# ===============
+# 基本パラメータ
+# ===============
+LABEL_TO_INT = {"rock": 0, "paper": 1, "rest": 2}  # 各ラベルに対する出力ノード
+INPUT_SIZE = 2  # 筋電の数。デフォルト：2 （EDC, FDP）
+PARAM_PATH = "./src/param.h"  # パラメータを保存するパス
+RESULT_PATH = "./ml/dataset/result.json"  # 　学習結果を保存するパス
+MODEL_DIR = "./ml/dataset/model"  # Kerasモデルのパス
+TFLITE_MODEL_PATH = "./ml/dataset/model.tflite"  # TFLiteモデルのパス
+C_MODEL_PATH = "./src/model.cpp"  # Cモデルのパス
+MODEL_TRAIN_DETAIL = True  # モデル学習時の詳細を表示する
 
-    sum_num = recall+precision
-    f = 2*recall*precision/sum_num if sum_num != 0 else 0
-    return recall, precision, f
+# ===============
+# 調整パラメータ
+# ===============
+SPIKE_DISTANCE = 1
+MISSREP_RATE = 0.3  # 不要データの閾値。最大が1に対して{MISSREP_RATE}未満の筋電のものは除外する。
+NORMALIZE_QUANTILE = 0.9
+NORMALIZE_STD_WEIGHT = 2
 
-
-def calc_score_threshold(X_max, y, rock_f_lower_threshold, rock_e_upper_threshold, paper_e_lower_threshold, paper_f_upper_threshold):
-
-    t_rock = []
-    t_paper = []
-    for _x, _y in zip(X_max, y):
-        e = _x[0]
-        f = _x[1]
-        if (f > rock_f_lower_threshold) & (e < rock_e_upper_threshold) & (e > paper_e_lower_threshold) & (f < paper_f_upper_threshold):
-            continue
-        if (f > rock_f_lower_threshold) & (e < rock_e_upper_threshold):
-            t_rock.append(_y)
-        if (e > paper_e_lower_threshold) & (f < paper_f_upper_threshold):
-            t_paper.append(_y)
-
-    # 性能評価
-    recall_rock, precision_rock, f_rock = calc_(t_rock, y, "rock")
-    recall_paper, precision_paper, f_paper = calc_(t_paper, y, "paper")
-
-    return {
-        "rock_f_lower_threshold": rock_f_lower_threshold,
-        "rock_e_upper_threshold": rock_e_upper_threshold,
-        "paper_e_lower_threshold": paper_e_lower_threshold,
-        "paper_f_upper_threshold": paper_f_upper_threshold,
-        "recall_rock": round(recall_rock, 2),
-        "precision_rock": round(precision_rock, 2),
-        "f_rock": round(f_rock, 2),
-        "recall_paper": round(recall_paper, 2),
-        "precision_paper": round(precision_paper, 2),
-        "f_paper": round(f_paper, 2)
-    }
+STEPS = 3  # 入力するRMS数。デフォルト：６ （150ms間隔でRMSを取得したときの約1秒分）
+CNN_HEIGHT = 25  # cnnの高さ
+CNN_KERNEL_SIZE = 3  # cnnのカーネルサイズ
+CNN_KERNEL_NUM = 3  # cnnのカーネル数
 
 
-def main(df_sp, max_score):
-    # =======
-    # 学習用データセットの準備
-    # =======
-    count_idx_list = df_sp.count_idx.unique()
+def dict_to_cfile(data, data_int, filename, defname, _round=False):
+    txt = ""
+    txt += f"#ifndef {defname}_H_\n"
+    txt += f"#define {defname}_H_\n"
+    txt += f"\n"
+    for k, v in data.items():
+        txt += f"const float {k} = {round(v, _round) if _round else v};\n"
+    for k, v in data_int.items():
+        txt += f"const int {k} = {int(v)};\n"
+    txt += f"\n"
+    txt += f"#endif // {defname}_H_"
+    with open(filename, "w") as f:
+        f.write(txt)
 
-    X = []
-    y = []
-    for count_idx in count_idx_list:
-        _df = df_sp[df_sp["count_idx"] == count_idx]
 
-        if len(_df) < 2:
-            continue
+def main(sp):
+    # ====
+    # 前処理
+    # ====
 
-        _df = _df[1:]  # 最初のひとつは前の試技の値が残る
-        _x = _df[["extensor_sp", "flexor_sp"]].to_numpy()
-        _y = _df["label"].to_numpy()[0]
-        X.append(_x)
-        y.append(_y)
+    # スパイク除去
+    sp = delete_spike(sp, distance=SPIKE_DISTANCE)
 
-    X = np.array(X)
-    y = np.array(y)
+    # ノイズ除去・正規化
+    sp, normalize_stats = normalize(
+        sp, quantile=NORMALIZE_QUANTILE, std_weight=NORMALIZE_STD_WEIGHT)
 
-    # =======
+    # 不要な学習データ除去
+    sp = delete_missrep(sp, ratio=MISSREP_RATE)
+
+    # 最後の試技（課題後のrest）を削除
+    sp = delete_last_cid(sp)
+
+    # ====
     # 学習
-    # TODO: CNNに切り替え
-    # =======
+    # ====
 
-    # 各試技内での最大値を取得
-    X_max = np.array([x.transpose(1, 0).max(axis=1) for x in X])
+    # cnn
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Input(
+            shape=(STEPS, CNN_HEIGHT, INPUT_SIZE), name='input'),
+        tf.keras.layers.Conv2D(
+            CNN_KERNEL_NUM, (CNN_KERNEL_SIZE, CNN_HEIGHT), padding="same"),
+        tf.keras.layers.MaxPooling2D((STEPS, 1)),  # なくても変わらない
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(3, activation=tf.nn.softmax, name='output')
+    ])
 
-    extensor_range = np.arange(
-        np.min(X_max[:, 0])*0.99, np.max(X_max[:, 0])+0.0001, (np.max(X_max[:, 0]) - np.min(X_max[:, 0]))/50)
-    flexor_range = np.arange(
-        np.min(X_max[:, 1])*0.99, np.max(X_max[:, 1])+0.0001, (np.max(X_max[:, 1]) - np.min(X_max[:, 1]))/50)
+    model.compile(optimizer='adam',
+                  loss='sparse_categorical_crossentropy',
+                  metrics=['accuracy'])
 
-    # グーを最適化
-    d = [calc_score_threshold(X_max, y, rock_f_lower_threshold, rock_e_upper_threshold, 0, 0)
-         for rock_f_lower_threshold, rock_e_upper_threshold
-         in itertools.product(flexor_range, extensor_range)]
+    # モデルを学習する
+    model, x, y, result = model_train(
+        model,
+        sp,
+        label_to_int=LABEL_TO_INT,
+        steps=STEPS,
+        cnn_height=CNN_HEIGHT,
+        detail=MODEL_TRAIN_DETAIL,
+    )
 
-    df = pd.DataFrame(d)
+    # 学習結果を保存
+    with open(RESULT_PATH, 'w') as f:
+        json.dump(result, f)
 
-    df = df[df["f_rock"] >= df["f_rock"].max()]
-    df = df[df["rock_e_upper_threshold"] == df["rock_e_upper_threshold"].min()]
-    df = df[df["rock_f_lower_threshold"] == df["rock_f_lower_threshold"].max()]
-    row = df.head(1)
-    rock_f_lower_threshold = row["rock_f_lower_threshold"].tolist()[0]
-    rock_e_upper_threshold = row["rock_e_upper_threshold"].tolist()[0]
+    # ModelをTFLiteModelに変換する
+    tflite_model = convert_to_tflite(model, model_dir=MODEL_DIR, dim=[
+                                     STEPS, CNN_HEIGHT, INPUT_SIZE], optimize=True)
 
-    # パーを最適化
-    d = [calc_score_threshold(X_max, y, rock_f_lower_threshold, rock_e_upper_threshold, paper_f_lower_threshold, paper_e_upper_threshold)
-         for paper_f_lower_threshold, paper_e_upper_threshold
-         in itertools.product(flexor_range, extensor_range)]
+    # ModelとTFLiteModelが同じ出力であることを確認する
+    check_if_model_and_tfmodel_is_almost_equal(model, tflite_model, x)
 
-    df = pd.DataFrame(d)
+    # 保存
+    with open(TFLITE_MODEL_PATH, 'wb') as f:
+        f.write(tflite_model)
 
-    df["f_rock_paper"] = df.f_rock + df.f_paper
+    # Cファイルに変換
+    subprocess.Popen(
+        f"xxd -i {TFLITE_MODEL_PATH} > {C_MODEL_PATH}", shell=True)
 
-    # 精度を更新したときのみ，パラメータを更新する
-    f_rock_paper_max = df["f_rock_paper"].max()
-    if max_score >= f_rock_paper_max:
-        return max_score, False
+    # パラメータ保存
+    param = {}
+    param["kNormalizeMax"] = normalize_stats.normalize_max
+    param["kNormalizeMin"] = normalize_stats.normalize_min
+    param_int = {}
+    param_int["kModelInputWidth"] = STEPS
+    param_int["kModelInputHeight"] = CNN_HEIGHT
+    param_int["kChannleNumber"] = INPUT_SIZE
+    dict_to_cfile(param, param_int, PARAM_PATH, defname="PARAM", _round=6)
 
-    df = df[df["f_rock_paper"] >= f_rock_paper_max]
-    df = df[df["paper_f_upper_threshold"] ==
-            df["paper_f_upper_threshold"].min()]
-    df = df[df["paper_e_lower_threshold"] ==
-            df["paper_e_lower_threshold"].max()]
-    row = df.head(1)
-    paper_e_lower_threshold = row["paper_e_lower_threshold"].tolist()[0]
-    paper_f_upper_threshold = row["paper_f_upper_threshold"].tolist()[0]
-
-    # 結果
-    recall_rock = row['recall_rock'].to_list()[0]
-    precision_rock = row['precision_rock'].to_list()[0]
-    recall_paper = row['recall_paper'].to_list()[0]
-    precision_paper = row['precision_paper'].to_list()[0]
-
-    print("* 更新 *")
-    print(f"rock:  recall={recall_rock}, precision={precision_rock}")
-    print(f"paper: recall={recall_paper}, precision={precision_paper}")
-
-    # 更新
-    with open(param_file, "w") as f:
-        f.write(
-            f"const float rock_flexor_lower_limit = {rock_f_lower_threshold};\n")
-        f.write(
-            f"const float rock_extensor_upper_limit = {rock_e_upper_threshold};\n")
-        f.write(
-            f"const float paper_extensor_lower_limit = {paper_e_lower_threshold};\n")
-        f.write(
-            f"const float paper_flexor_upper_limit = {paper_f_upper_threshold};\n")
-
-    return f_rock_paper_max, True
+    return result
 
 
-# 使用するデータ読み込み
-df_sp = pd.read_json("./ml/dataset/sp.json")
-
-df_sp["task_id"] = df_sp["task_name"] + df_sp["task_num"].apply(str)
-task_ids = df_sp["task_id"].unique()
-
-max_score, _ = main(df_sp, 0)
-
-# もっとも精度が悪いファイルを除去していく
-# 3ファイルまで
-for i in range(2):
-
-    drop_flag = False
-    for task_id in task_ids:
-        _df_sp = df_sp[df_sp["task_id"] != task_id]
-        max_score, update = main(_df_sp, max_score)
-        if update:
-            drop_task_id = task_id
-            drop_flag = True
-
-    if drop_flag:
-        df_sp = df_sp[df_sp["task_id"] != drop_task_id]
-
-print("\nfinish")
+sp = pd.read_json("./ml/dataset/sp.json")
+result = main(sp)
+print(result)

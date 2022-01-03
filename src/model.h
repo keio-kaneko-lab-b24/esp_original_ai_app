@@ -1,1 +1,1 @@
-extern unsigned char model_tflite[];
+extern unsigned char __ml_dataset_model_tflite[];

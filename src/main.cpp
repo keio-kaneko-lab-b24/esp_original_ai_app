@@ -76,38 +76,31 @@ void TaskMaincode(void *pvParameters)
       xSemaphoreGive(xMutex);
     }
 
-    // 閾値判定
-    motion motion = NONE;
-    motion = PredictThreshold(
-        extensor_value,
-        flexor_value,
-        rock_flexor_lower_limit,
-        rock_extensor_upper_limit,
-        paper_extensor_lower_limit,
-        paper_flexor_upper_limit);
+    // 直近のRMSが0の場合は、Restに判定
+    float last_extensor = s_extensor_values[kModelInputWidth - 1];
+    float last_flexor = s_flexor_values[kModelInputWidth - 1];
+    if ((last_extensor == 0) & (last_flexor == 0))
+    {
+      motion motion = NONE;
+      HandleOutput(motion);
+      continue;
+    }
 
-    // ロボットへ出力
-    HandleOutput(motion);
-
-    // float buffer_input[BUFFER_SIZE] = {
-    //     1., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1.,
-    //     0., 0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 1., 0.,
-    //     0., 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
-    //     0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
-
+    // 推論
     float *input_buffer = nn->getInputBuffer();
     for (int i = 0; i < BUFFER_SIZE; i++)
     {
       input_buffer[i] = buffer_input[i];
     }
-
     float *result = nn->predict();
     Serial.printf("%.2f, %.2f, %.2f\n", result[0], result[1], result[2]);
+
+    // 判定
+    motion motion = NONE;
+    motion = PredictML(result[0], result[1], result[2]);
+
+    // ロボットへ出力
+    HandleOutput(motion);
   }
 };
 
