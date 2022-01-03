@@ -23,6 +23,7 @@ SemaphoreHandle_t xMutex = NULL;
 char main_s[64];
 long last_sample_micros = 0;
 long last_process_micros = 0;
+long measured_time = 0;
 
 // IOスレッド
 void TaskIOcode(void *pvParameters)
@@ -69,6 +70,7 @@ void TaskMaincode(void *pvParameters)
     vTaskDelay(1);
 
     // スレッドセーフな処理
+    measured_time = micros();
     if (xSemaphoreTake(xMutex, (portTickType)100) == pdTRUE)
     {
       SignalProcess();
@@ -101,6 +103,9 @@ void TaskMaincode(void *pvParameters)
 
     // ロボットへ出力
     HandleOutput(motion);
+
+    // 推論時間
+    Serial.printf("推論時間 = %ld micro sec", micros() - measured_time);
   }
 };
 
