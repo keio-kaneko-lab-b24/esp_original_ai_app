@@ -62,6 +62,15 @@ private:
             sprintf(buf, "time: %lu\ne_sp: %f\nf_sp: %f", currentMillis, extensor_value, flexor_value);
             Serial.println(buf);
         }
+
+        // Notify
+        pCharacteristic->setValue(value);
+        pCharacteristic->notify();
+    }
+
+    void onNotify(BLECharacteristic *pCharacteristic)
+    {
+        Serial.println("onNotify");
     }
 };
 
