@@ -6,10 +6,12 @@
 #include "motion.h"
 #include "predictor.h"
 #include "emg.h"
+#include "input_handler.h"
 #include "param_ml.h"
 #include "signal_processor.h"
 #include "model.h"
 #include "param.h"
+#include "constants.h"
 #include "NeuralNetwork.h"
 
 NeuralNetwork *nn;
@@ -30,23 +32,31 @@ void TaskIOcode(void *pvParameters)
 {
   for (;;)
   {
-    // 1000Hz
-    if ((micros() - last_sample_micros) < 1 * 1000)
+    // 100Hz
+    if ((micros() - last_sample_micros) < 10 * 1000)
     {
       continue;
     }
     last_sample_micros = micros();
 
-    UpdateBLEConnection();
+    // UpdateBLEConnection();
 
     // ウォッチドッグのために必要
     // https://github.com/espressif/arduino-esp32/issues/3001
     // https://lang-ship.com/blog/work/esp32-freertos-l03-multitask/#toc12
     vTaskDelay(1);
 
-    // スレッドセーフな処理
+    // ブロックが必要な処理
     if (xSemaphoreTake(xMutex, (portTickType)100) == pdTRUE)
     {
+      begin_index += 1;
+      if (begin_index >= r_length - 1)
+      {
+        begin_index = 0;
+      }
+
+      HandleInput();
+
       xSemaphoreGive(xMutex);
     }
   }
@@ -79,8 +89,8 @@ void TaskMaincode(void *pvParameters)
     }
 
     // 直近のRMSが0の場合は、Restに判定
-    float last_extensor = s_extensor_values[kModelInputWidth - 1];
-    float last_flexor = s_flexor_values[kModelInputWidth - 1];
+    float last_extensor = d_extensor_values[kModelInputWidth - 1];
+    float last_flexor = d_flexor_values[kModelInputWidth - 1];
     if ((last_extensor == 0) & (last_flexor == 0))
     {
       motion motion = NONE;
@@ -121,9 +131,9 @@ void setup()
   nn = new NeuralNetwork();
 
   xMutex = xSemaphoreCreateMutex();
-  xTaskCreatePinnedToCore(TaskIOcode, "TaskIO", 4096, NULL, 2, &TaskIO, 0); //Task1実行
+  xTaskCreatePinnedToCore(TaskIOcode, "TaskIO", 4096, NULL, 2, &TaskIO, 0); // Task1実行
   delay(500);
-  xTaskCreatePinnedToCore(TaskMaincode, "TaskMain", 4096, NULL, 2, &TaskMain, 1); //Task2実行
+  xTaskCreatePinnedToCore(TaskMaincode, "TaskMain", 4096, NULL, 2, &TaskMain, 1); // Task2実行
   delay(500);
 
   Serial.println("[setup] finished.");

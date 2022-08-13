@@ -4,59 +4,65 @@
 #include "param.h"
 #include "emg.h"
 
+char sp_s[64];
+
 char signal_process_s[100];
+// RollingAverageのフィルタ幅
+int filterWidth = 10;
 
 /**
  * 信号処理
  */
 void SignalProcess()
 {
-    // sprintf(signal_process_s, "normalize_max: %f, normalize_min: %f", kNormalizeMax, kNormalizeMin);
-    // Serial.println(signal_process_s);
-
-    // Serial.println("before normalize");
-    // for (int i = 0; i < EMG_LENGTH; ++i)
-    // {
-    //     sprintf(signal_process_s, "%d: %f, %f", i, extensor_values[i], flexor_values[i]);
-    //     Serial.println(signal_process_s);
-    // }
-
     // 整列
     ArrangeArray(
-        extensor_values,
-        flexor_values,
+        raw_extensor_values,
+        raw_flexor_values,
         ar_extensor_values,
         ar_flexor_values,
         begin_index,
-        EMG_LENGTH);
+        RAW_EMG_LENGTH);
 
     // 正規化
-    Normalize(
+    float extensor_mean = Mean(ar_extensor_values, RAW_EMG_LENGTH);
+    float flexor_mean = Mean(ar_flexor_values, RAW_EMG_LENGTH);
+    Normalization(
         ar_extensor_values,
         ar_flexor_values,
-        s_extensor_values,
-        s_flexor_values,
-        EMG_LENGTH,
+        n_extensor_values,
+        n_flexor_values,
+        extensor_mean,
+        flexor_mean,
+        RAW_EMG_LENGTH);
+
+    sprintf(sp_s, "e_norm: %f\nf_norm: %f", n_extensor_values[RAW_EMG_LENGTH - 1], n_flexor_values[RAW_EMG_LENGTH - 1]);
+    Serial.println(sp_s);
+
+    // 正規化
+    RollingAverage(
+        n_extensor_values,
+        n_flexor_values,
+        ra_extensor_values,
+        ra_flexor_values,
+        RAW_EMG_LENGTH);
+
+    // ダウンサンプリング
+    DownSample(
+        ra_extensor_values,
+        ra_flexor_values,
+        d_extensor_values,
+        d_flexor_values,
+        RAW_EMG_LENGTH,
         kModelInputWidth);
 
-    // テスト
-    // s_extensor_values[0] = 0.0;
-    // s_extensor_values[1] = 0.0;
-    // s_extensor_values[2] = 0.0;
-    // s_flexor_values[0] = 0.04;
-    // s_flexor_values[1] = 0.1;
-    // s_flexor_values[2] = 0.1;
-
-    for (int i = 0; i < kModelInputWidth; ++i)
-    {
-        sprintf(signal_process_s, "%d: %f, %f", i, s_extensor_values[i], s_flexor_values[i]);
-        Serial.println(signal_process_s);
-    }
+    sprintf(sp_s, "e_sp: %f\nf_sp: %f", d_extensor_values[RAW_EMG_LENGTH - 1], d_flexor_values[RAW_EMG_LENGTH - 1]);
+    Serial.println(sp_s);
 
     // カテゴリ化
     Categorize(
-        s_extensor_values,
-        s_flexor_values,
+        d_extensor_values,
+        d_flexor_values,
         buffer_input,
         kModelInputWidth,
         kModelInputHeight);
@@ -66,8 +72,8 @@ void SignalProcess()
  * リングバッファの整列
  */
 void ArrangeArray(
-    volatile float extensor_values[],
-    volatile float flexor_values[],
+    volatile float raw_extensor_values[],
+    volatile float raw_flexor_values[],
     volatile float ar_extensor_values[],
     volatile float ar_flexor_values[],
     volatile int begin_index,
@@ -80,52 +86,117 @@ void ArrangeArray(
         {
             ring_array_index += value_length;
         }
-        ar_extensor_values[i] = extensor_values[ring_array_index];
-        ar_flexor_values[i] = flexor_values[ring_array_index];
+        ar_extensor_values[i] = raw_extensor_values[ring_array_index];
+        ar_flexor_values[i] = raw_flexor_values[ring_array_index];
     }
 }
 
 /**
- * 正規化（kModelInputWidth分のみ）
+ * フィルタ＋正規化
  */
-void Normalize(
-    volatile float ar_extensor_values[],
-    volatile float ar_flexor_values[],
-    volatile float s_extensor_values[],
-    volatile float s_flexor_values[],
-    const int value_length,
-    const int input_width)
+void Normalization(
+    volatile float ar_extensor_data[],
+    volatile float ar_flexor_data[],
+    volatile float n_extensor_data[],
+    volatile float n_flexor_data[],
+    float extensor_mean,
+    float flexor_mean,
+    const int r_length)
 {
-    for (int i = 0; i < input_width; ++i)
+    for (int i = 0; i < r_length; ++i)
     {
-        s_extensor_values[i] = _Normalize(ar_extensor_values[i + (value_length - input_width)]);
-        s_flexor_values[i] = _Normalize(ar_flexor_values[i + (value_length - input_width)]);
+
+        float f_extensor = (float)ar_extensor_data[i];
+        float f_flexor = (float)ar_flexor_data[i];
+
+        // 正規化
+        n_extensor_data[i] = f_extensor;
+        n_flexor_data[i] = f_flexor;
+        n_extensor_data[i] = abs(f_extensor - extensor_mean);
+        n_flexor_data[i] = abs(f_flexor - flexor_mean);
     }
 }
 
 /**
- * 正規化（1つの値のみ）
+ * 移動平均
  */
-float _Normalize(float value)
+void RollingAverage(
+    volatile float n_extensor_data[],
+    volatile float n_flexor_data[],
+    volatile float ra_extensor_data[],
+    volatile float ra_flexor_data[],
+    const int r_length)
 {
-    float n_value = (value - kNormalizeMin) / (kNormalizeMax - kNormalizeMin);
-    if (n_value >= 1)
+    float extensor_sum = 0;
+    float flexor_sum = 0;
+    int m_i = 0;
+
+    for (int i = 0; i < filterWidth; i++)
     {
-        return 1;
+        extensor_sum += n_extensor_data[i];
+        flexor_sum += n_flexor_data[i];
+        if (i >= (filterWidth / 2) - 1)
+        {
+            ra_extensor_data[m_i] = extensor_sum / (i + 1);
+            ra_flexor_data[m_i] = flexor_sum / (i + 1);
+            m_i += 1;
+        }
     }
-    else if (n_value <= 0)
+
+    for (int i = filterWidth; i < r_length; i++)
     {
-        return 0;
+        extensor_sum -= n_extensor_data[i - filterWidth];
+        extensor_sum += n_extensor_data[i];
+        ra_extensor_data[m_i] = extensor_sum / filterWidth;
+        flexor_sum -= n_flexor_data[i - filterWidth];
+        flexor_sum += n_flexor_data[i];
+        ra_flexor_data[m_i] = flexor_sum / filterWidth;
+        m_i += 1;
     }
-    return n_value;
+
+    for (int i = r_length; i < r_length + (filterWidth / 2); i++)
+    {
+        extensor_sum -= n_extensor_data[i - filterWidth];
+        ra_extensor_data[m_i] = extensor_sum / (filterWidth - (i - r_length) + 1);
+        flexor_sum -= n_flexor_data[i - filterWidth];
+        ra_flexor_data[m_i] = flexor_sum / (filterWidth - (i - r_length) + 1);
+        m_i += 1;
+        if (m_i >= r_length)
+        {
+            break;
+        }
+    }
 }
 
-/** 
+/**
+ * ダウンサンプリング
+ * ra_*（orignal長）をd_*（sampled長）にダウンサプリングする
+ */
+void DownSample(
+    volatile float ra_extensor_data[],
+    volatile float ra_flexor_data[],
+    volatile float d_extensor_data[],
+    volatile float d_flexor_data[],
+    const int original_length,
+    const int sampled_length)
+{
+    int step = original_length / sampled_length;
+    // 初期化
+    int j = 0;
+    for (int i = 0; i < original_length; i += step)
+    {
+        d_extensor_data[j] = ra_extensor_data[i];
+        d_flexor_data[j] = ra_flexor_data[i];
+        j += 1;
+    }
+}
+
+/**
  * カテゴライズ
  */
 void Categorize(
-    volatile float n_extensor_values[],
-    volatile float n_flexor_values[],
+    volatile float d_extensor_values[],
+    volatile float d_flexor_values[],
     volatile float buffer_input[],
     const int input_width,
     const int input_height)
@@ -139,8 +210,8 @@ void Categorize(
 
     for (int i = 0; i < input_width; ++i)
     {
-        int e_index_ = _CategorizeIndex(n_extensor_values[i]);
-        int f_index_ = _CategorizeIndex(n_flexor_values[i]);
+        int e_index_ = _CategorizeIndex(d_extensor_values[i]);
+        int f_index_ = _CategorizeIndex(d_flexor_values[i]);
         int base_index = i * input_height * 2;
         int e_index = base_index + (e_index_ * 2);
         int f_index = base_index + (f_index_ * 2) + 1;
@@ -151,7 +222,7 @@ void Categorize(
     }
 }
 
-/** 
+/**
  * カテゴライズIndexの取得
  */
 int _CategorizeIndex(float value)
@@ -162,4 +233,17 @@ int _CategorizeIndex(float value)
         index = kModelInputHeight - 1;
     }
     return index;
+}
+
+float Mean(
+    volatile float data[],
+    int length)
+{
+    int total = 0;
+    for (int i = 0; i < length; i++)
+    {
+        total += data[i];
+    }
+    float mean_value = (float)total / (float)length;
+    return mean_value;
 }

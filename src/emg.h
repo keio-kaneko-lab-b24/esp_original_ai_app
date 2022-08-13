@@ -3,7 +3,7 @@
 
 #include "param.h"
 
-const int EMG_LENGTH = 20;
+const int RAW_EMG_LENGTH = (int)(1000 * 0.25);
 const int BUFFER_SIZE = kChannleNumber * kModelInputHeight * kModelInputWidth;
 
 // 共通：信号処理後の値
@@ -12,22 +12,27 @@ extern volatile float flexor_value;
 
 extern volatile int begin_index;
 
-// Delsysから取得したRMS（約1回/150ms）
-extern volatile float extensor_values[EMG_LENGTH];
-extern volatile float flexor_values[EMG_LENGTH];
+// 生筋電
+extern volatile float raw_extensor_values[RAW_EMG_LENGTH];
+extern volatile float raw_flexor_values[RAW_EMG_LENGTH];
 
-// 整列後のRMS
-extern volatile float ar_extensor_values[EMG_LENGTH];
-extern volatile float ar_flexor_values[EMG_LENGTH];
+// 整列後の生筋電
+extern volatile float ar_extensor_values[RAW_EMG_LENGTH];
+extern volatile float ar_flexor_values[RAW_EMG_LENGTH];
 
-// 信号処理後のRMS
-extern volatile float s_extensor_values[kModelInputWidth];
-extern volatile float s_flexor_values[kModelInputWidth];
+// 正規化後の生筋電
+extern volatile float n_extensor_values[RAW_EMG_LENGTH];
+extern volatile float n_flexor_values[RAW_EMG_LENGTH];
+
+// 移動平均後の生筋電（=RMS）
+extern volatile float ra_extensor_values[RAW_EMG_LENGTH];
+extern volatile float ra_flexor_values[RAW_EMG_LENGTH];
+
+// ダウンサンプリング後のRMS
+extern volatile float d_extensor_values[kModelInputWidth];
+extern volatile float d_flexor_values[kModelInputWidth];
 
 // カテゴライズ後のバッファ
 extern volatile float buffer_input[BUFFER_SIZE];
-
-extern void updataRMSFromString(
-    std::string value);
 
 #endif // EMG_H_

@@ -53,25 +53,25 @@ private:
         // sprintf(buf, "%s", value.c_str());
         // Serial.println(buf);
 
-        // TODO: HandRobotAppとDELSYSから送る情報にヘッダーを付与し，処理を判定する
-        if (value.substr(0, 1) == "E")
-        {
-            updataRMSFromString(value);
+        // DELSYS版のみ
+        // if (value.substr(0, 1) == "E")
+        // {
+        //     updataRMSFromString(value);
 
-            unsigned long currentMillis = xTaskGetTickCount();
-            sprintf(buf, "time: %lu\ne_sp: %f\nf_sp: %f", currentMillis, extensor_value, flexor_value);
-            Serial.println(buf);
-        }
+        //     unsigned long currentMillis = xTaskGetTickCount();
+        //     sprintf(buf, "time: %lu\ne_sp: %f\nf_sp: %f", currentMillis, extensor_value, flexor_value);
+        //     Serial.println(buf);
+        // }
 
         // Notify
-        pCharacteristic->setValue(value);
-        pCharacteristic->notify();
+        // pCharacteristic->setValue(value);
+        // pCharacteristic->notify();
     }
 
-    void onNotify(BLECharacteristic *pCharacteristic)
-    {
-        Serial.println("onNotify");
-    }
+    // void onNotify(BLECharacteristic *pCharacteristic)
+    // {
+    //     Serial.println("onNotify");
+    // }
 };
 
 void SetUpBLE()
