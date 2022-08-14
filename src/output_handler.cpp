@@ -2,10 +2,10 @@
 
 #include "output_handler.h"
 
-#define MD1_OUT1 32 //GPIO #32
-#define MD1_OUT2 33 //GPIO #33
-#define MD2_OUT1 25 //GPIO #25
-#define MD2_OUT2 26 //GPIO #26
+#define MD1_OUT1 32 // GPIO #32
+#define MD1_OUT2 33 // GPIO #33
+#define MD2_OUT1 25 // GPIO #25
+#define MD2_OUT2 26 // GPIO #26
 
 char output_s[100];
 long last_paper_micros = 0;

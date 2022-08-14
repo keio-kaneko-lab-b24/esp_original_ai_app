@@ -51,13 +51,18 @@ void SignalProcess()
     Serial.println(sp_s);
 
     // ダウンサンプリング
+    // A. 生データの間隔 = 0.01sec。
+    // B. 学習に使用する間隔 = 信号処理の間隔 = 0.1 sec。
+    // AをBに補正したので、stepを10にする。そのうえで、kModelInputWidthだけRMSを残す。
+    const int step = 10;
     DownSample(
         ra_extensor_values,
         ra_flexor_values,
         d_extensor_values,
         d_flexor_values,
         RAW_EMG_LENGTH,
-        kModelInputWidth);
+        kModelInputWidth,
+        step);
 
     unsigned long currentMillis = xTaskGetTickCount();
     sprintf(sp_s, "time: %lu\ne_sp: %f\nf_sp: %f", currentMillis, d_extensor_values[kModelInputWidth - 1], d_flexor_values[kModelInputWidth - 1]);
@@ -216,11 +221,11 @@ void DownSample(
     volatile float d_extensor_data[],
     volatile float d_flexor_data[],
     const int original_length,
-    const int sampled_length)
+    const int sampled_length,
+    const int step)
 {
-    int step = original_length / sampled_length;
     int j = 0;
-    for (int i = 0; i < original_length; i += step)
+    for (int i = original_length - (step * sampled_length); i < original_length; i += step)
     {
         d_extensor_data[j] = ra_extensor_data[i];
         d_flexor_data[j] = ra_flexor_data[i];

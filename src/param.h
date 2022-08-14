@@ -1,8 +1,8 @@
 #ifndef PARAM_H_
 #define PARAM_H_
 
-const float kNormalizeMax = 532.656912;
-const float kNormalizeMin = 251.916277;
+const float kNormalizeMax = 513.036377;
+const float kNormalizeMin = 120.718419;
 const int kModelInputWidth = 10;
 const int kModelInputHeight = 25;
 const int kChannleNumber = 2;

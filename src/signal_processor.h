@@ -35,7 +35,8 @@ extern void DownSample(
     volatile float d_extensor_values[],
     volatile float d_flexor_values[],
     const int original_length,
-    const int sampled_length);
+    const int sampled_length,
+    const int step);
 
 extern void Categorize(
     volatile float d_extensor_values[],
