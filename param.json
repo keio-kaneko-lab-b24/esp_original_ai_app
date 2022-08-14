@@ -8,13 +8,13 @@
                 "repeat_num":1
             },
             "fing_stretch": {
-                "paper_keep_time": 1,
-                "rest_keep_time": 1,
+                "paper_keep_time": 3,
+                "rest_keep_time": 3,
                 "repeat_num":5
             },
             "fing_flexion": {
-                "rock_keep_time": 1,
-                "rest_keep_time": 1,
+                "rock_keep_time": 3,
+                "rest_keep_time": 3,
                 "repeat_num":5
             },
             "grip_stretch": {
@@ -54,7 +54,7 @@
         "view_monitor": {
             "raw_data_view_yaxis_max": 1.5,
             "raw_data_view_yaxis_min": 0,
-            "sp_data_view_yaxis_max": 1.5,
+            "sp_data_view_yaxis_max": 600,
             "sp_data_view_yaxis_min": 0
         }
     }

@@ -13,6 +13,10 @@ def data_cnn_expand(x, cnn_height):
                 l = min(l, CNN_HEIGHT-1)
                 expanded_x[i, j, k, l] = 1.0
     expanded_x = expanded_x.transpose((0, 1, 3, 2))
+    # for i in range(len(expanded_x[10])):
+    #     print("====")
+    #     print(x[10][i])
+    #     print(expanded_x[10][i])
     return expanded_x
 
 

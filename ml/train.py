@@ -41,7 +41,7 @@ MISSREP_RATE = 0.3  # 不要データの閾値。最大が1に対して{MISSREP_
 NORMALIZE_QUANTILE = 0.9
 # 正規化の最小値を決めるパラメータ。安静時のRMSにおいて、平均+{std_weight}*SDの値を0に正規化する。
 NORMALIZE_STD_WEIGHT = 2
-STEPS = 3  # 入力するRMS数。デフォルト：3 （150ms間隔でRMSを取得したときの約1秒分）
+STEPS = 10  # 入力するRMS数。デフォルト：10 （Original版）
 CNN_HEIGHT = 25  # cnnの高さ。デフォルト：25（正規化されたRMS値を25分割してCNNに入力する）
 CNN_KERNEL_SIZE = 3  # cnnのカーネルサイズ
 CNN_KERNEL_NUM = 3  # cnnのカーネル数

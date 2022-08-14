@@ -107,6 +107,9 @@ void TaskMaincode(void *pvParameters)
     float *result = nn->predict();
     Serial.printf("%.2f, %.2f, %.2f\n", result[0], result[1], result[2]);
 
+    // TODO: 片方だけ最後のindexで0.5を超えている場合は、超えた方向の動作と判定する。
+    // ...
+
     // 判定
     motion motion = NONE;
     motion = PredictML(result[0], result[1], result[2]);

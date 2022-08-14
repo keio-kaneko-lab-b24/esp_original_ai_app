@@ -20,6 +20,8 @@ extern void Normalization(
     float flexor_mean,
     const int r_length);
 
+extern float _NormalizationZeroOne(float value);
+
 extern void RollingAverage(
     volatile float n_extensor_values[],
     volatile float n_flexor_values[],

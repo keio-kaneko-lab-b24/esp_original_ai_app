@@ -24,7 +24,7 @@ void SignalProcess()
         begin_index,
         RAW_EMG_LENGTH);
 
-    // 正規化
+    // 正規化(平均)
     float extensor_mean = Mean(ar_extensor_values, RAW_EMG_LENGTH);
     float flexor_mean = Mean(ar_flexor_values, RAW_EMG_LENGTH);
     Normalization(
@@ -39,13 +39,16 @@ void SignalProcess()
     sprintf(sp_s, "e_norm: %f\nf_norm: %f", n_extensor_values[RAW_EMG_LENGTH - 1], n_flexor_values[RAW_EMG_LENGTH - 1]);
     Serial.println(sp_s);
 
-    // 正規化
+    // 移動平均
     RollingAverage(
         n_extensor_values,
         n_flexor_values,
         ra_extensor_values,
         ra_flexor_values,
         RAW_EMG_LENGTH);
+
+    sprintf(sp_s, "e_ra: %f\nf_ra: %f", ra_extensor_values[RAW_EMG_LENGTH - 10], ra_flexor_values[RAW_EMG_LENGTH - 10]);
+    Serial.println(sp_s);
 
     // ダウンサンプリング
     DownSample(
@@ -56,7 +59,19 @@ void SignalProcess()
         RAW_EMG_LENGTH,
         kModelInputWidth);
 
-    sprintf(sp_s, "e_sp: %f\nf_sp: %f", d_extensor_values[RAW_EMG_LENGTH - 1], d_flexor_values[RAW_EMG_LENGTH - 1]);
+    unsigned long currentMillis = xTaskGetTickCount();
+    sprintf(sp_s, "time: %lu\ne_sp: %f\nf_sp: %f", currentMillis, d_extensor_values[kModelInputWidth - 1], d_flexor_values[kModelInputWidth - 1]);
+    Serial.println(sp_s);
+
+    // 正規化(0-1)
+    // TODO: 関数化
+    for (int i = 0; i < kModelInputWidth; ++i)
+    {
+        d_extensor_values[i] = _NormalizationZeroOne(d_extensor_values[i]);
+        d_flexor_values[i] = _NormalizationZeroOne(d_flexor_values[i]);
+    }
+
+    sprintf(sp_s, "e_sp_norm: %f\nf_sp_norm: %f", d_extensor_values[kModelInputWidth - 1], d_flexor_values[kModelInputWidth - 1]);
     Serial.println(sp_s);
 
     // カテゴリ化
@@ -66,6 +81,12 @@ void SignalProcess()
         buffer_input,
         kModelInputWidth,
         kModelInputHeight);
+
+    // for (int i = 0; i < 500; ++i)
+    // {
+    //     sprintf(sp_s, "buffer %d, value: %f", i, buffer_input[i]);
+    //     Serial.println(sp_s);
+    // }
 }
 
 /**
@@ -92,7 +113,7 @@ void ArrangeArray(
 }
 
 /**
- * フィルタ＋正規化
+ * 正規化（平均）
  */
 void Normalization(
     volatile float ar_extensor_data[],
@@ -115,6 +136,23 @@ void Normalization(
         n_extensor_data[i] = abs(f_extensor - extensor_mean);
         n_flexor_data[i] = abs(f_flexor - flexor_mean);
     }
+}
+
+/**
+ * 正規化（0-1）（1つのみ）
+ */
+float _NormalizationZeroOne(float value)
+{
+    float n_value = (value - kNormalizeMin) / (kNormalizeMax - kNormalizeMin);
+    if (n_value >= 1)
+    {
+        return 1;
+    }
+    else if (n_value <= 0)
+    {
+        return 0;
+    }
+    return n_value;
 }
 
 /**
@@ -181,7 +219,6 @@ void DownSample(
     const int sampled_length)
 {
     int step = original_length / sampled_length;
-    // 初期化
     int j = 0;
     for (int i = 0; i < original_length; i += step)
     {
@@ -215,8 +252,8 @@ void Categorize(
         int base_index = i * input_height * 2;
         int e_index = base_index + (e_index_ * 2);
         int f_index = base_index + (f_index_ * 2) + 1;
-        // sprintf(signal_process_s, "index-> %d %d", e_index, f_index);
-        // Serial.println(signal_process_s);
+        // sprintf(sp_s, "cnn_index: %f -> %d , %f -> %d", d_extensor_values[i], e_index, d_flexor_values[i], f_index);
+        // Serial.println(sp_s);
         buffer_input[e_index] = 1.0;
         buffer_input[f_index] = 1.0;
     }
