@@ -8,13 +8,13 @@
                 "repeat_num":1
             },
             "fing_stretch": {
-                "paper_keep_time": 3,
-                "rest_keep_time": 3,
+                "paper_keep_time": 1,
+                "rest_keep_time": 1,
                 "repeat_num":5
             },
             "fing_flexion": {
-                "rock_keep_time": 3,
-                "rest_keep_time": 3,
+                "rock_keep_time": 1,
+                "rest_keep_time": 1,
                 "repeat_num":5
             },
             "grip_stretch": {
@@ -49,6 +49,11 @@
                 "rock_keep_time": 1,
                 "rest_keep_time": 1,
                 "repeat_num":5
+            },
+            "test": {
+                "paper_keep_time": 2,
+                "rock_keep_time": 2,
+                "repeat_num":30
             }
         },
         "view_monitor": {
