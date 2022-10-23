@@ -26,7 +26,7 @@ void HandleOutput(motion predict_motion)
     if (predict_motion == PAPER)
     {
         // グー判定されてから1秒間はパー判定しない
-        if ((micros() - last_rock_micros) < 1 * 1000 * 1000)
+        if ((micros() - last_rock_micros) < 1 * 1000 * 250)
         {
             OutputType00();
         }
@@ -39,7 +39,7 @@ void HandleOutput(motion predict_motion)
     else if (predict_motion == ROCK)
     {
         // パー判定されてから1秒間はグー判定しない
-        if ((micros() - last_paper_micros) < 1 * 1000 * 1000)
+        if ((micros() - last_paper_micros) < 1 * 1000 * 250)
         {
             OutputType00();
         }

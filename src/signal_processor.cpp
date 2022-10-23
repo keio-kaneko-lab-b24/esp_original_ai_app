@@ -247,7 +247,7 @@ void Categorize(
     // 初期化
     for (size_t i = 0; i < BUFFER_SIZE; i++)
     {
-        buffer_input[0] = 0.0;
+        buffer_input[i] = 0.0;
     }
 
     for (int i = 0; i < input_width; ++i)
