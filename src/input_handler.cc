@@ -17,9 +17,16 @@ bool HandleInput()
     raw_extensor_values[begin_index] = a;
     raw_flexor_values[begin_index] = b;
 
-    // Serial.println(handle_input_s);
-    // sprintf(handle_input_s, "index: %d\ne: %f\nf: %f\n", begin_index, raw_extensor_values[begin_index], raw_flexor_values[begin_index]);
-    // Serial.println(handle_input_s);
+    // （モニタリング用）筋電を出力する
+    if (begin_index % 10 == 0)
+    {
+        unsigned long currentMillis = xTaskGetTickCount();
+        sprintf(
+            handle_input_s,
+            "t: %lu\ni: %d\ne: %d\nf: %d\n",
+            currentMillis, begin_index, raw_extensor_values[begin_index], raw_flexor_values[begin_index]);
+        Serial.println(handle_input_s);
+    }
 
     return true;
 }
