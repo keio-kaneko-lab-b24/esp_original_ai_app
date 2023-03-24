@@ -1,7 +1,6 @@
 #include <Arduino.h>
 
 #include "main.h"
-#include "ble.h"
 #include "output_handler.h"
 #include "motion.h"
 #include "predictor.h"
@@ -140,8 +139,6 @@ void setup()
 {
   delay(3000);
   Serial.begin(115200);
-
-  SetUpBLE();
 
   OutputSetup();
 
