@@ -87,31 +87,31 @@ void TaskMaincode(void *pvParameters)
     }
 
     // 直近のRMSが0.5以下の場合は、Restに判定
-    float last_extensor = d_extensor_values[kModelInputWidth - 1];
-    float last_flexor = d_flexor_values[kModelInputWidth - 1];
-    if ((last_extensor <= 0.5) & (last_flexor <= 0.5))
-    {
-      motion motion = NONE;
-      Serial.printf("threshold predict: paper\n");
-      HandleOutput(motion);
-      continue;
-    }
-    // 直近のRMSがExtensorだけ0.8を超えた場合は、Paperに判定
-    if ((last_extensor >= 0.8) & (last_flexor < 0.5))
-    {
-      motion motion = PAPER;
-      HandleOutput(motion);
-      Serial.printf("threshold predict: paper\n");
-      continue;
-    }
-    // 直近のRMSがFlexorだけ0.8を超えた場合は、Rockに判定
-    if ((last_flexor >= 0.8) & (last_extensor < 0.5))
-    {
-      motion motion = ROCK;
-      HandleOutput(motion);
-      Serial.printf("threshold predict: rock\n");
-      continue;
-    }
+    // float last_extensor = d_extensor_values[kModelInputWidth - 1];
+    // float last_flexor = d_flexor_values[kModelInputWidth - 1];
+    // if ((last_extensor <= 0.5) & (last_flexor <= 0.5))
+    // {
+    //   motion motion = NONE;
+    //   Serial.printf("threshold predict: paper\n");
+    //   HandleOutput(motion);
+    //   continue;
+    // }
+    // // 直近のRMSがExtensorだけ0.8を超えた場合は、Paperに判定
+    // if ((last_extensor >= 0.8) & (last_flexor < 0.5))
+    // {
+    //   motion motion = PAPER;
+    //   HandleOutput(motion);
+    //   Serial.printf("threshold predict: paper\n");
+    //   continue;
+    // }
+    // // 直近のRMSがFlexorだけ0.8を超えた場合は、Rockに判定
+    // if ((last_flexor >= 0.8) & (last_extensor < 0.5))
+    // {
+    //   motion motion = ROCK;
+    //   HandleOutput(motion);
+    //   Serial.printf("threshold predict: rock\n");
+    //   continue;
+    // }
 
     // 推論
     float *input_buffer = nn->getInputBuffer();
@@ -120,7 +120,7 @@ void TaskMaincode(void *pvParameters)
       input_buffer[i] = buffer_input[i];
     }
     float *result = nn->predict();
-    Serial.printf("%.2f, %.2f, %.2f\n", result[0], result[1], result[2]);
+    Serial.printf("prediction: %.2f, %.2f, %.2f\n", result[0], result[1], result[2]);
 
     // 判定
     motion motion = NONE;

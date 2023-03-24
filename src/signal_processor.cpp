@@ -40,13 +40,7 @@ void SignalProcess()
         ra_flexor_values,
         RAW_EMG_LENGTH);
 
-    sprintf(sp_s, "e_sp: %f\nf_sp: %f", ra_extensor_values[0], ra_flexor_values[0]);
-    Serial.println(sp_s);
-
     // ダウンサンプリング
-    // A. 生データの間隔 = 0.001sec。
-    // B. 学習に使用する間隔 = 信号処理の間隔 = 0.1 sec。
-    // AをBに補正したので、stepを10にする。そのうえで、kModelInputWidthだけRMSを残す。
     const int step = 10;
     DownSample(
         ra_extensor_values,
