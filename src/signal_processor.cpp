@@ -6,10 +6,6 @@
 
 char sp_s[64];
 
-char signal_process_s[100];
-// RollingAverageのフィルタ幅
-int filterWidth = 10;
-
 /**
  * 信号処理
  */
@@ -36,9 +32,6 @@ void SignalProcess()
         flexor_mean,
         RAW_EMG_LENGTH);
 
-    sprintf(sp_s, "e_norm: %f\nf_norm: %f", n_extensor_values[RAW_EMG_LENGTH - 1], n_flexor_values[RAW_EMG_LENGTH - 1]);
-    Serial.println(sp_s);
-
     // 移動平均
     RollingAverage(
         n_extensor_values,
@@ -47,11 +40,11 @@ void SignalProcess()
         ra_flexor_values,
         RAW_EMG_LENGTH);
 
-    sprintf(sp_s, "e_ra: %f\nf_ra: %f", ra_extensor_values[RAW_EMG_LENGTH - 10], ra_flexor_values[RAW_EMG_LENGTH - 10]);
+    sprintf(sp_s, "e_sp: %f\nf_sp: %f", ra_extensor_values[0], ra_flexor_values[0]);
     Serial.println(sp_s);
 
     // ダウンサンプリング
-    // A. 生データの間隔 = 0.01sec。
+    // A. 生データの間隔 = 0.001sec。
     // B. 学習に使用する間隔 = 信号処理の間隔 = 0.1 sec。
     // AをBに補正したので、stepを10にする。そのうえで、kModelInputWidthだけRMSを残す。
     const int step = 10;
@@ -69,15 +62,11 @@ void SignalProcess()
     Serial.println(sp_s);
 
     // 正規化(0-1)
-    // TODO: 関数化
     for (int i = 0; i < kModelInputWidth; ++i)
     {
         d_extensor_values[i] = _NormalizationZeroOne(d_extensor_values[i]);
         d_flexor_values[i] = _NormalizationZeroOne(d_flexor_values[i]);
     }
-
-    sprintf(sp_s, "e_sp_norm: %f\nf_sp_norm: %f", d_extensor_values[kModelInputWidth - 1], d_flexor_values[kModelInputWidth - 1]);
-    Serial.println(sp_s);
 
     // カテゴリ化
     Categorize(
@@ -86,31 +75,25 @@ void SignalProcess()
         buffer_input,
         kModelInputWidth,
         kModelInputHeight);
-
-    // for (int i = 0; i < 500; ++i)
-    // {
-    //     sprintf(sp_s, "buffer %d, value: %f", i, buffer_input[i]);
-    //     Serial.println(sp_s);
-    // }
 }
 
 /**
  * リングバッファの整列
  */
 void ArrangeArray(
-    volatile float raw_extensor_values[],
-    volatile float raw_flexor_values[],
-    volatile float ar_extensor_values[],
-    volatile float ar_flexor_values[],
+    volatile int raw_extensor_values[],
+    volatile int raw_flexor_values[],
+    volatile int ar_extensor_values[],
+    volatile int ar_flexor_values[],
     volatile int begin_index,
-    const int value_length)
+    const int RAW_LENGTH)
 {
-    for (int i = 0; i < value_length; ++i)
+    for (int i = 0; i < RAW_LENGTH; ++i)
     {
-        int ring_array_index = begin_index + i - value_length + 1;
-        if (ring_array_index < 0)
+        int ring_array_index = begin_index + i;
+        if (ring_array_index >= RAW_LENGTH)
         {
-            ring_array_index += value_length;
+            ring_array_index -= RAW_LENGTH;
         }
         ar_extensor_values[i] = raw_extensor_values[ring_array_index];
         ar_flexor_values[i] = raw_flexor_values[ring_array_index];
@@ -121,23 +104,21 @@ void ArrangeArray(
  * 正規化（平均）
  */
 void Normalization(
-    volatile float ar_extensor_data[],
-    volatile float ar_flexor_data[],
+    volatile int ar_extensor_data[],
+    volatile int ar_flexor_data[],
     volatile float n_extensor_data[],
     volatile float n_flexor_data[],
     float extensor_mean,
     float flexor_mean,
-    const int r_length)
+    const int RAW_LENGTH)
 {
-    for (int i = 0; i < r_length; ++i)
+    for (int i = 0; i < RAW_LENGTH; ++i)
     {
 
         float f_extensor = (float)ar_extensor_data[i];
         float f_flexor = (float)ar_flexor_data[i];
 
         // 正規化
-        n_extensor_data[i] = f_extensor;
-        n_flexor_data[i] = f_flexor;
         n_extensor_data[i] = abs(f_extensor - extensor_mean);
         n_flexor_data[i] = abs(f_flexor - flexor_mean);
     }
@@ -162,52 +143,35 @@ float _NormalizationZeroOne(float value)
 
 /**
  * 移動平均
+ * {WINDOW_SIZE}に満たない前後半の{WINDOW_SIZE/2}は計算から除外しているため、
+ * m_extensor(flexor)_dataの後半{WINDOW_SIZE}分は必ず0になる。
  */
 void RollingAverage(
     volatile float n_extensor_data[],
     volatile float n_flexor_data[],
     volatile float ra_extensor_data[],
     volatile float ra_flexor_data[],
-    const int r_length)
+    const int RAW_LENGTH)
 {
     float extensor_sum = 0;
     float flexor_sum = 0;
     int m_i = 0;
 
-    for (int i = 0; i < filterWidth; i++)
+    for (int i = 0; i < WINDOW_SIZE; i++)
     {
         extensor_sum += n_extensor_data[i];
         flexor_sum += n_flexor_data[i];
-        if (i >= (filterWidth / 2) - 1)
-        {
-            ra_extensor_data[m_i] = extensor_sum / (i + 1);
-            ra_flexor_data[m_i] = flexor_sum / (i + 1);
-            m_i += 1;
-        }
     }
 
-    for (int i = filterWidth; i < r_length; i++)
+    for (int i = WINDOW_SIZE; i < RAW_LENGTH; i++)
     {
-        extensor_sum -= n_extensor_data[i - filterWidth];
+        extensor_sum -= n_extensor_data[i - WINDOW_SIZE];
         extensor_sum += n_extensor_data[i];
-        ra_extensor_data[m_i] = extensor_sum / filterWidth;
-        flexor_sum -= n_flexor_data[i - filterWidth];
+        ra_extensor_data[m_i] = extensor_sum / WINDOW_SIZE;
+        flexor_sum -= n_flexor_data[i - WINDOW_SIZE];
         flexor_sum += n_flexor_data[i];
-        ra_flexor_data[m_i] = flexor_sum / filterWidth;
+        ra_flexor_data[m_i] = flexor_sum / WINDOW_SIZE;
         m_i += 1;
-    }
-
-    for (int i = r_length; i < r_length + (filterWidth / 2); i++)
-    {
-        extensor_sum -= n_extensor_data[i - filterWidth];
-        ra_extensor_data[m_i] = extensor_sum / (filterWidth - (i - r_length) + 1);
-        flexor_sum -= n_flexor_data[i - filterWidth];
-        ra_flexor_data[m_i] = flexor_sum / (filterWidth - (i - r_length) + 1);
-        m_i += 1;
-        if (m_i >= r_length)
-        {
-            break;
-        }
     }
 }
 
@@ -225,7 +189,7 @@ void DownSample(
     const int step)
 {
     int j = 0;
-    for (int i = original_length - (step * sampled_length); i < original_length; i += step)
+    for (int i = 0; i < (step * sampled_length); i += step)
     {
         d_extensor_data[j] = ra_extensor_data[i];
         d_flexor_data[j] = ra_flexor_data[i];
@@ -278,7 +242,7 @@ int _CategorizeIndex(float value)
 }
 
 float Mean(
-    volatile float data[],
+    volatile int data[],
     int length)
 {
     int total = 0;

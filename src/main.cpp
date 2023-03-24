@@ -10,7 +10,6 @@
 #include "signal_processor.h"
 #include "model.h"
 #include "param.h"
-#include "constants.h"
 #include "NeuralNetwork.h"
 
 NeuralNetwork *nn;
@@ -31,8 +30,8 @@ void TaskIOcode(void *pvParameters)
 {
   for (;;)
   {
-    // 100Hz
-    if ((micros() - last_sample_micros) < 10 * 1000)
+    // 毎秒 {TARGET_HZ} 回実行される
+    if ((micros() - last_sample_micros) < (1000 * 1000 / TARGET_HZ))
     {
       continue;
     }
@@ -49,7 +48,7 @@ void TaskIOcode(void *pvParameters)
     if (xSemaphoreTake(xMutex, (portTickType)100) == pdTRUE)
     {
       begin_index += 1;
-      if (begin_index >= r_length - 1)
+      if (begin_index >= RAW_EMG_LENGTH)
       {
         begin_index = 0;
       }
@@ -66,8 +65,8 @@ void TaskMaincode(void *pvParameters)
 {
   for (;;)
   {
-    // 10Hz
-    if ((micros() - last_process_micros) < 100 * 1000)
+    // 毎秒 {PREDICT_HZ} 回実行される
+    if ((micros() - last_process_micros) < (1000 * 1000 / PREDICT_HZ))
     {
       continue;
     }

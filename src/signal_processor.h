@@ -4,21 +4,21 @@
 extern void SignalProcess();
 
 extern void ArrangeArray(
-    volatile float raw_extensor_values[],
-    volatile float raw_flexor_values[],
-    volatile float ar_extensor_values[],
-    volatile float ar_flexor_values[],
+    volatile int raw_extensor_values[],
+    volatile int raw_flexor_values[],
+    volatile int ar_extensor_values[],
+    volatile int ar_flexor_values[],
     volatile int begin_index,
-    const int value_length);
+    const int RAW_LENGTH);
 
 extern void Normalization(
-    volatile float ar_extensor_values[],
-    volatile float ar_flexor_values[],
+    volatile int ar_extensor_values[],
+    volatile int ar_flexor_values[],
     volatile float n_extensor_values[],
     volatile float n_flexor_values[],
     float extensor_mean,
     float flexor_mean,
-    const int r_length);
+    const int RAW_LENGTH);
 
 extern float _NormalizationZeroOne(float value);
 
@@ -27,7 +27,7 @@ extern void RollingAverage(
     volatile float n_flexor_values[],
     volatile float ra_extensor_values[],
     volatile float ra_flexor_values[],
-    const int r_length);
+    const int RAW_LENGTH);
 
 extern void DownSample(
     volatile float ra_extensor_values[],
@@ -64,7 +64,7 @@ extern int Min(
     int length);
 
 extern float Mean(
-    volatile float data[],
+    volatile int data[],
     int length);
 
 #endif // SIGNAL_PROCESSOR_H_
