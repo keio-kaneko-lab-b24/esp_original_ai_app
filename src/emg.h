@@ -11,13 +11,11 @@ constexpr int PREDICT_HZ = 10;
 const float NEEDS_TIME_SEC = 0.25;
 // 入力配列の要素数（直近{RAW_LENGTH}個分の筋電を常に保持しておく）
 const int RAW_EMG_LENGTH = (int)(TARGET_HZ * NEEDS_TIME_SEC);
-
 // 移動平均に使用する窓枠サイズ
 // 注意：{RAW_LENGTH}より小さい必要がある
 const int WINDOW_SIZE = 100;
-
 // ML入力の要素数
-const int BUFFER_SIZE = kChannleNumber * kModelInputHeight * kModelInputWidth;
+const int BUFFER_SIZE = CHANNEL_NUMBER * MODEL_INPUT_HEIGHT * MODEL_INPUT_WIDTH;
 
 // 共通：信号処理後の値
 extern volatile float extensor_value;
@@ -42,8 +40,8 @@ extern volatile float ra_extensor_values[RAW_EMG_LENGTH];
 extern volatile float ra_flexor_values[RAW_EMG_LENGTH];
 
 // ダウンサンプリング後のRMS
-extern volatile float d_extensor_values[kModelInputWidth];
-extern volatile float d_flexor_values[kModelInputWidth];
+extern volatile float d_extensor_values[MODEL_INPUT_WIDTH];
+extern volatile float d_flexor_values[MODEL_INPUT_WIDTH];
 
 // カテゴライズ後のバッファ
 extern volatile float buffer_input[BUFFER_SIZE];
