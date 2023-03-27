@@ -46,9 +46,6 @@ while True:
     t = -99
     try:
         with open(monitor_file, "r") as f:
-            # for line in f.readlines()[::-1]:
-            # if "e_sp:" in line:
-            # t = int(re.sub("[^0-9]", "", line))
             break
     except:
         pass
@@ -102,7 +99,6 @@ def load():
                 continue
 
             # 出力
-            # gr = re.search("P ([0-9\\.]+): G ([0-9\\.]+)", line)
             gr = re.search("out1 = ([0-9\\.]+), out2 = ([0-9\\.]+)", line)
             if gr:
                 gu.append(float(gr.group(1)))
