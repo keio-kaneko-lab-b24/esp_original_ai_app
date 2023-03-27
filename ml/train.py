@@ -26,7 +26,7 @@ tf.random.set_seed(1234)
 # ===============
 LABEL_TO_INT = {"rock": 0, "paper": 1, "rest": 2}  # 各ラベルに対する出力ノード
 INPUT_SIZE = 2  # 筋電の数。デフォルト：2 （EDC, FDP）
-PARAM_PATH = "./src/param.h"  # パラメータを保存するパス
+PARAM_PATH = "./src/model_param.h"  # パラメータを保存するパス
 MODEL_DIR = "./ml/dataset/model"  # Kerasモデルのパス
 TFLITE_MODEL_PATH = "./ml/dataset/model.tflite"  # TFLiteモデルのパス
 C_MODEL_PATH = "./src/model.cpp"  # Cモデルのパス

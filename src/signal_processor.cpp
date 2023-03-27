@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 #include "signal_processor.h"
-#include "param.h"
+#include "model_param.h"
 #include "emg.h"
 
 char sp_s[64];

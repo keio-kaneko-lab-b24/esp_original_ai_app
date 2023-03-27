@@ -1,5 +1,5 @@
-#ifndef PARAM_H_
-#define PARAM_H_
+#ifndef MODEL_PARAM_H_
+#define MODEL_PARAM_H_
 
 const float NORMALIZE_MAX = 34.982189;
 const float NORMALIZE_MIN = 7.710585;

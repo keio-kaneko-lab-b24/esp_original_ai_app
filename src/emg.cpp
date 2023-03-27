@@ -2,9 +2,6 @@
 
 #include "emg.h"
 
-volatile float extensor_value = 0;
-volatile float flexor_value = 0;
-
 volatile int begin_index = 0;
 volatile int raw_extensor_values[RAW_EMG_LENGTH] = {0};
 volatile int raw_flexor_values[RAW_EMG_LENGTH] = {0};

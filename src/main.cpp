@@ -8,7 +8,7 @@
 #include "input_handler.h"
 #include "signal_processor.h"
 #include "model.h"
-#include "param.h"
+#include "model_param.h"
 #include "neural_network.h"
 
 NeuralNetwork *nn;

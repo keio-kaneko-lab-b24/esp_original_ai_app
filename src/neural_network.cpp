@@ -1,6 +1,6 @@
 #include "neural_network.h"
 #include "model.h"
-#include "param.h"
+#include "model_param.h"
 #include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"

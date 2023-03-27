@@ -1,7 +1,7 @@
 #ifndef EMG_H_
 #define EMG_H_
 
-#include "param.h"
+#include "model_param.h"
 
 // サンプリング周波数（1秒間に何回筋電位を取得するか）
 constexpr int TARGET_HZ = 1000;
@@ -17,15 +17,11 @@ const int WINDOW_SIZE = 100;
 // ML入力の要素数
 const int BUFFER_SIZE = CHANNEL_NUMBER * MODEL_INPUT_HEIGHT * MODEL_INPUT_WIDTH;
 
-// 共通：信号処理後の値
-extern volatile float extensor_value;
-extern volatile float flexor_value;
-
-extern volatile int begin_index;
-
 // 生筋電
 extern volatile int raw_extensor_values[RAW_EMG_LENGTH];
 extern volatile int raw_flexor_values[RAW_EMG_LENGTH];
+// 生筋電配列のインデックス
+extern volatile int begin_index;
 
 // 整列後の生筋電
 extern volatile int ar_extensor_values[RAW_EMG_LENGTH];
