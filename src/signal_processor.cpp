@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 #include "signal_processor.h"
-#include "param.h"
+#include "model_param.h"
 #include "emg.h"
 
 char sp_s[64];
@@ -48,15 +48,15 @@ void SignalProcess()
         d_extensor_values,
         d_flexor_values,
         RAW_EMG_LENGTH,
-        kModelInputWidth,
+        MODEL_INPUT_WIDTH,
         step);
 
     unsigned long currentMillis = xTaskGetTickCount();
-    sprintf(sp_s, "time: %lu\ne_sp: %f\nf_sp: %f", currentMillis, d_extensor_values[kModelInputWidth - 1], d_flexor_values[kModelInputWidth - 1]);
+    sprintf(sp_s, "time: %lu\ne_sp: %f\nf_sp: %f", currentMillis, d_extensor_values[MODEL_INPUT_WIDTH - 1], d_flexor_values[MODEL_INPUT_WIDTH - 1]);
     Serial.println(sp_s);
 
     // 正規化(0-1)
-    for (int i = 0; i < kModelInputWidth; ++i)
+    for (int i = 0; i < MODEL_INPUT_WIDTH; ++i)
     {
         d_extensor_values[i] = _NormalizationZeroOne(d_extensor_values[i]);
         d_flexor_values[i] = _NormalizationZeroOne(d_flexor_values[i]);
@@ -67,8 +67,8 @@ void SignalProcess()
         d_extensor_values,
         d_flexor_values,
         buffer_input,
-        kModelInputWidth,
-        kModelInputHeight);
+        MODEL_INPUT_WIDTH,
+        MODEL_INPUT_HEIGHT);
 }
 
 /**
@@ -123,7 +123,7 @@ void Normalization(
  */
 float _NormalizationZeroOne(float value)
 {
-    float n_value = (value - kNormalizeMin) / (kNormalizeMax - kNormalizeMin);
+    float n_value = (value - NORMALIZE_MIN) / (NORMALIZE_MAX - NORMALIZE_MIN);
     if (n_value >= 1)
     {
         return 1;
@@ -227,10 +227,10 @@ void Categorize(
  */
 int _CategorizeIndex(float value)
 {
-    int index = floor(value * kModelInputHeight);
-    if (index >= kModelInputHeight)
+    int index = floor(value * MODEL_INPUT_HEIGHT);
+    if (index >= MODEL_INPUT_HEIGHT)
     {
-        index = kModelInputHeight - 1;
+        index = MODEL_INPUT_HEIGHT - 1;
     }
     return index;
 }

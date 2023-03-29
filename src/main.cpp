@@ -6,11 +6,10 @@
 #include "predictor.h"
 #include "emg.h"
 #include "input_handler.h"
-#include "param_ml.h"
 #include "signal_processor.h"
 #include "model.h"
-#include "param.h"
-#include "NeuralNetwork.h"
+#include "model_param.h"
+#include "neural_network.h"
 
 NeuralNetwork *nn;
 
@@ -23,7 +22,7 @@ SemaphoreHandle_t xMutex = NULL;
 char main_s[64];
 long last_sample_micros = 0;
 long last_process_micros = 0;
-long measured_time = 0;
+long prediction_micros = 0;
 
 // IOスレッド
 void TaskIOcode(void *pvParameters)
@@ -36,8 +35,6 @@ void TaskIOcode(void *pvParameters)
       continue;
     }
     last_sample_micros = micros();
-
-    // UpdateBLEConnection();
 
     // ウォッチドッグのために必要
     // https://github.com/espressif/arduino-esp32/issues/3001
@@ -78,40 +75,13 @@ void TaskMaincode(void *pvParameters)
     vTaskDelay(1);
 
     // スレッドセーフな処理
-    measured_time = micros();
+    prediction_micros = micros();
     if (xSemaphoreTake(xMutex, (portTickType)100) == pdTRUE)
     {
       SignalProcess();
 
       xSemaphoreGive(xMutex);
     }
-
-    // 直近のRMSが0.5以下の場合は、Restに判定
-    // float last_extensor = d_extensor_values[kModelInputWidth - 1];
-    // float last_flexor = d_flexor_values[kModelInputWidth - 1];
-    // if ((last_extensor <= 0.5) & (last_flexor <= 0.5))
-    // {
-    //   motion motion = NONE;
-    //   Serial.printf("threshold predict: paper\n");
-    //   HandleOutput(motion);
-    //   continue;
-    // }
-    // // 直近のRMSがExtensorだけ0.8を超えた場合は、Paperに判定
-    // if ((last_extensor >= 0.8) & (last_flexor < 0.5))
-    // {
-    //   motion motion = PAPER;
-    //   HandleOutput(motion);
-    //   Serial.printf("threshold predict: paper\n");
-    //   continue;
-    // }
-    // // 直近のRMSがFlexorだけ0.8を超えた場合は、Rockに判定
-    // if ((last_flexor >= 0.8) & (last_extensor < 0.5))
-    // {
-    //   motion motion = ROCK;
-    //   HandleOutput(motion);
-    //   Serial.printf("threshold predict: rock\n");
-    //   continue;
-    // }
 
     // 推論
     float *input_buffer = nn->getInputBuffer();
@@ -130,7 +100,7 @@ void TaskMaincode(void *pvParameters)
     HandleOutput(motion);
 
     // 推論時間
-    // Serial.printf("推論時間 = %ld micro sec\n", micros() - measured_time);
+    Serial.printf("推論時間 = %ld micros\n", micros() - prediction_micros);
   }
 };
 

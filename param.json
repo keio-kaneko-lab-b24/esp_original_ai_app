@@ -17,38 +17,11 @@
                 "rest_keep_time": 3,
                 "repeat_num":5
             },
-            "grip_stretch": {
-                "paper_keep_time": 3,
-                "rest_keep_time": 3,
+            "bbt": {
+                "paper_keep_time": 10,
+                "rock_keep_time": 15,
+                "rest_keep_time": 5,
                 "repeat_num":1
-            },
-            "grip_flexion": {
-                "rock_keep_time": 3,
-                "rest_keep_time": 3,
-                "repeat_num":1
-            },
-            "grip_release": {
-                "paper_keep_time": 3,
-                "rest_keep_time": 3,
-                "repeat_num":1
-            },
-            "grip": {
-                "paper_keep_time": 3,
-                "rock_keep_time": 3,
-                "rest_keep_time": 3,
-                "repeat_num":1
-            },
-            "elbow_flexion_stretch": {
-                "paper_keep_time": 1,
-                "rock_keep_time": 1,
-                "rest_keep_time": 1,
-                "repeat_num":5
-            },
-            "elbow_stretch_flexion": {
-                "paper_keep_time": 1,
-                "rock_keep_time": 1,
-                "rest_keep_time": 1,
-                "repeat_num":5
             },
             "test": {
                 "paper_keep_time": 2,
