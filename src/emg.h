@@ -9,7 +9,7 @@ constexpr int TARGET_HZ = 1000;
 constexpr int PREDICT_HZ = 10;
 // 入力配列の時間（何秒間分を判定に使用するか）
 const float NEEDS_TIME_SEC = 0.25;
-// 入力配列の要素数（直近{RAW_LENGTH}個分の筋電を常に保持しておく）
+// 入力配列の要素数（直近{RAW_EMG_LENGTH}個分の筋電を常に保持しておく）
 const int RAW_EMG_LENGTH = (int)(TARGET_HZ * NEEDS_TIME_SEC);
 // 移動平均に使用する窓枠サイズ
 // 注意：{RAW_LENGTH}より小さい必要がある

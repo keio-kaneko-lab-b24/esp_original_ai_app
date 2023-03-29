@@ -11,7 +11,7 @@ extern void ArrangeArray(
     volatile int begin_index,
     const int RAW_LENGTH);
 
-extern void Normalization(
+extern void Normalize(
     volatile int ar_extensor_values[],
     volatile int ar_flexor_values[],
     volatile float n_extensor_values[],
@@ -20,7 +20,7 @@ extern void Normalization(
     float flexor_mean,
     const int RAW_LENGTH);
 
-extern float _NormalizationZeroOne(float value);
+extern float _NormalizeZeroOne(float value);
 
 extern void RollingAverage(
     volatile float n_extensor_values[],

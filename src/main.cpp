@@ -41,7 +41,7 @@ void TaskIOcode(void *pvParameters)
     // https://lang-ship.com/blog/work/esp32-freertos-l03-multitask/#toc12
     vTaskDelay(1);
 
-    // ブロックが必要な処理
+    // スレッドセーフな処理
     if (xSemaphoreTake(xMutex, (portTickType)100) == pdTRUE)
     {
       begin_index += 1;

@@ -23,7 +23,7 @@ void SignalProcess()
     // 正規化(平均)
     float extensor_mean = Mean(ar_extensor_values, RAW_EMG_LENGTH);
     float flexor_mean = Mean(ar_flexor_values, RAW_EMG_LENGTH);
-    Normalization(
+    Normalize(
         ar_extensor_values,
         ar_flexor_values,
         n_extensor_values,
@@ -58,8 +58,8 @@ void SignalProcess()
     // 正規化(0-1)
     for (int i = 0; i < MODEL_INPUT_WIDTH; ++i)
     {
-        d_extensor_values[i] = _NormalizationZeroOne(d_extensor_values[i]);
-        d_flexor_values[i] = _NormalizationZeroOne(d_flexor_values[i]);
+        d_extensor_values[i] = _NormalizeZeroOne(d_extensor_values[i]);
+        d_flexor_values[i] = _NormalizeZeroOne(d_flexor_values[i]);
     }
 
     // カテゴリ化
@@ -97,7 +97,7 @@ void ArrangeArray(
 /**
  * 正規化（平均）
  */
-void Normalization(
+void Normalize(
     volatile int ar_extensor_data[],
     volatile int ar_flexor_data[],
     volatile float n_extensor_data[],
@@ -121,7 +121,7 @@ void Normalization(
 /**
  * 正規化（0-1）（1つのみ）
  */
-float _NormalizationZeroOne(float value)
+float _NormalizeZeroOne(float value)
 {
     float n_value = (value - NORMALIZE_MIN) / (NORMALIZE_MAX - NORMALIZE_MIN);
     if (n_value >= 1)
